@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NUC Infrastructure System Plate</title>
+  <style>
+    :root {
+      --paper: #f2efe8;
+      --paper-deep: #e9e5dc;
+      --ink: #22262e;
+      --muted: #5f6671;
+      --quiet: #7b818a;
+      --line: rgba(34, 38, 46, 0.18);
+      --line-strong: rgba(34, 38, 46, 0.42);
+      --accent: #c64e32;
+      --accent-wash: rgba(198, 78, 50, 0.07);
+      --blue: #35617d;
+      --blue-wash: rgba(53, 97, 125, 0.06);
+      --sans: InterVariable, Inter, "Helvetica Neue", Arial, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --serif: Georgia, "Times New Roman", serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      color: var(--ink);
+      background: var(--paper);
+      font-family: var(--sans);
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body { margin: 0; }
+
+    main {
+      isolation: isolate;
+      padding: 34px 0 56px;
+    }
+
+    .page {
+      width: min(100%, 1500px);
+      margin: 0 auto;
+      padding: 0 34px;
+    }
+
+    .masthead {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 390px);
+      gap: 48px;
+      align-items: end;
+      padding: 22px 0 28px;
+      border-top: 3px solid var(--ink);
+      border-bottom: 1px solid var(--line-strong);
+    }
+
+    .masthead-kicker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 22px;
+      margin-bottom: 20px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .masthead-kicker span:first-child { color: var(--accent); }
+
+    h1 {
+      max-width: 19ch;
+      margin: 0;
+      font-family: var(--serif);
+      font-size: clamp(3rem, 5vw, 5rem);
+      font-weight: 400;
+      letter-spacing: -0.04em;
+      text-wrap: balance;
+    }
+
+    .standfirst {
+      max-width: 42ch;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.65;
+      text-wrap: pretty;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      gap: 38px;
+      padding-top: 34px;
+    }
+
+    .index {
+      min-width: 0;
+      border-top: 1px solid var(--ink);
+    }
+
+    .index-section {
+      padding: 18px 0 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .index-heading {
+      margin: 0 0 16px;
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .index-list {
+      display: grid;
+      gap: 14px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .index-item {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .index-number {
+      color: var(--quiet);
+      font-family: var(--mono);
+      font-size: 0.6875rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .index-name {
+      margin: 0;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .index-detail {
+      grid-column: 2;
+      margin: -6px 0 0;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.6875rem;
+      line-height: 1.5;
+    }
+
+    .facts {
+      display: grid;
+      gap: 13px;
+      margin: 0;
+    }
+
+    .facts-row {
+      display: grid;
+      gap: 3px;
+    }
+
+    .facts dt {
+      color: var(--ink);
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    .facts dd {
+      margin: 0;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.6875rem;
+      line-height: 1.5;
+    }
+
+    .legend {
+      display: grid;
+      gap: 11px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .legend li {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.8125rem;
+      line-height: 1.35;
+    }
+
+    .legend-line {
+      height: 1px;
+      background: var(--muted);
+    }
+
+    .legend-line.accent { height: 2px; background: var(--accent); }
+    .legend-line.blue { height: 2px; background: var(--blue); }
+    .legend-line.dashed { background: repeating-linear-gradient(90deg, var(--muted) 0 4px, transparent 4px 8px); }
+
+    figure {
+      min-width: 0;
+      margin: 0;
+      border-top: 1px solid var(--ink);
+    }
+
+    .figure-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 14px 0 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .figure-title,
+    .figure-meta {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 0.6875rem;
+      line-height: 1.5;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .figure-title { color: var(--ink); font-weight: 600; }
+    .figure-meta { color: var(--muted); text-align: right; }
+
+    .diagram-scroll {
+      width: 100%;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--line-strong);
+      scrollbar-color: var(--line-strong) transparent;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      min-width: 1280px;
+      height: auto;
+      background: var(--paper);
+    }
+
+    .boundary { fill: none; stroke: var(--line-strong); stroke-width: 1; }
+    .boundary-inner { fill: rgba(34, 38, 46, 0.015); stroke: var(--line); stroke-width: 1; stroke-dasharray: 5 5; }
+    .group-rule { stroke: var(--line-strong); stroke-width: 1; }
+    .corner-tick { stroke: var(--ink); stroke-width: 1.5; }
+    .interface-rule { stroke: var(--line); stroke-width: 1; }
+
+    .interface-index { fill: var(--quiet); font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.09em; }
+    .interface-name { fill: var(--ink); font-family: var(--sans); font-size: 15px; font-weight: 600; }
+    .interface-detail { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
+    .boundary-label { fill: var(--quiet); font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.13em; }
+    .section-number { fill: var(--line-strong); font-family: var(--serif); font-size: 38px; }
+
+    .node { fill: rgba(242, 239, 232, 0.9); stroke: var(--line-strong); stroke-width: 1; }
+    .node-primary { fill: var(--accent-wash); stroke: var(--accent); stroke-width: 1.4; }
+    .node-network { fill: var(--blue-wash); stroke: var(--blue); stroke-width: 1.2; }
+    .node-stripe { fill: var(--ink); }
+    .node-stripe-accent { fill: var(--accent); }
+    .node-stripe-blue { fill: var(--blue); }
+
+    .node-type { fill: var(--quiet); font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.11em; }
+    .node-type-accent { fill: var(--accent); }
+    .node-type-blue { fill: var(--blue); }
+    .node-name { fill: var(--ink); font-family: var(--sans); font-size: 16px; font-weight: 600; }
+    .node-detail { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
+    .metric-label { fill: var(--quiet); font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; }
+    .metric-value { fill: var(--ink); font-family: var(--mono); font-size: 11px; font-weight: 600; }
+
+    .connector { fill: none; stroke: var(--muted); stroke-width: 1.35; marker-end: url(#arrow-muted); }
+    .connector-accent { fill: none; stroke: var(--accent); stroke-width: 1.8; marker-end: url(#arrow-accent); }
+    .connector-blue { fill: none; stroke: var(--blue); stroke-width: 1.6; marker-end: url(#arrow-blue); }
+    .connector-dashed { fill: none; stroke: var(--muted); stroke-width: 1.1; stroke-dasharray: 4 4; marker-end: url(#arrow-muted); }
+    .label-mask { fill: var(--paper); }
+    .connector-label { fill: var(--muted); font-family: var(--mono); font-size: 9px; letter-spacing: 0.07em; text-anchor: middle; }
+    .connector-label-accent { fill: var(--accent); }
+    .connector-label-blue { fill: var(--blue); }
+    .status-rule { stroke: var(--line); stroke-width: 1; }
+    .status-label { fill: var(--quiet); font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; }
+    .status-value { fill: var(--ink); font-family: var(--mono); font-size: 10px; font-weight: 600; }
+
+    figcaption {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 420px);
+      gap: 28px;
+      padding-top: 16px;
+      color: var(--muted);
+      font-size: 0.8125rem;
+      line-height: 1.55;
+    }
+
+    figcaption p { margin: 0; }
+    figcaption strong { color: var(--ink); font-weight: 600; }
+
+    @media (max-width: 980px) {
+      main { padding-top: 24px; }
+      .page { padding: 0 20px; }
+      .masthead { grid-template-columns: 1fr; gap: 22px; }
+      .content-grid { grid-template-columns: 1fr; gap: 28px; }
+      .index { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+      .index-section { border-top: 1px solid var(--line); }
+    }
+
+    @media (max-width: 680px) {
+      .masthead { padding-top: 16px; }
+      h1 { font-size: 3rem; }
+      .standfirst { font-size: 1rem; }
+      .index { grid-template-columns: 1fr; gap: 0; }
+      .index-section { border-top: 0; }
+      .figure-header { display: grid; gap: 5px; }
+      .figure-meta { text-align: left; }
+      figcaption { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      main { padding: 0; }
+      .page { width: 100%; max-width: none; padding: 0; }
+      .content-grid { grid-template-columns: 190px minmax(0, 1fr); }
+      .diagram-scroll { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="page">
+      <header class="masthead">
+        <div>
+          <div class="masthead-kicker">
+            <span>System plate 01</span>
+            <span>Home infrastructure</span>
+            <span>Observed 13 Oct 2026</span>
+          </div>
+          <h1>NUC automation and agent architecture</h1>
+        </div>
+        <p class="standfirst">A single physical host carries two operating models: Home Assistant is isolated inside a virtual machine, while Hermes runs as a set of host-native services with separate web, messaging, and voice ingress.</p>
+      </header>
+
+      <div class="content-grid">
+        <aside class="index" aria-label="System index and observed configuration">
+          <section class="index-section">
+            <h2 class="index-heading">System index</h2>
+            <ol class="index-list">
+              <li class="index-item"><span class="index-number">01</span><p class="index-name">Physical NUC</p><p class="index-detail">host: nuc</p></li>
+              <li class="index-item"><span class="index-number">02</span><p class="index-name">Proxmox VE</p><p class="index-detail">9.2.2 · kernel 7.0.2-6-pve</p></li>
+              <li class="index-item"><span class="index-number">03</span><p class="index-name">Home Assistant</p><p class="index-detail">VM 100 · QEMU/KVM</p></li>
+              <li class="index-item"><span class="index-number">04</span><p class="index-name">Hermes services</p><p class="index-detail">host-native · systemd user</p></li>
+            </ol>
+          </section>
+
+          <section class="index-section">
+            <h2 class="index-heading">Observed</h2>
+            <dl class="facts">
+              <div class="facts-row"><dt>Home Assistant</dt><dd>2 vCPU · 4 GB RAM · VirtIO</dd></div>
+              <div class="facts-row"><dt>Hermes gateway</dt><dd>connected · queue 0</dd></div>
+              <div class="facts-row"><dt>Ingress</dt><dd>browser · WhatsApp · Twilio</dd></div>
+              <div class="facts-row"><dt>Phone path</dt><dd>Twilio → ngrok → bridge</dd></div>
+            </dl>
+          </section>
+
+          <section class="index-section">
+            <h2 class="index-heading">Line key</h2>
+            <ul class="legend">
+              <li><span class="legend-line accent"></span><span>automation and messaging</span></li>
+              <li><span class="legend-line blue"></span><span>external voice ingress</span></li>
+              <li><span class="legend-line"></span><span>local web session</span></li>
+              <li><span class="legend-line dashed"></span><span>logical agent call</span></li>
+            </ul>
+          </section>
+        </aside>
+
+        <figure>
+          <div class="figure-header">
+            <p class="figure-title">Runtime topology</p>
+            <p class="figure-meta">Physical → virtualisation → services</p>
+          </div>
+
+          <div class="diagram-scroll">
+            <svg viewBox="0 0 1280 700" role="img" aria-labelledby="system-plate-title system-plate-desc">
+              <title id="system-plate-title">NUC infrastructure runtime topology</title>
+              <desc id="system-plate-desc">Home network access, Twilio, a browser, and WhatsApp connect to a physical NUC. Proxmox runs Home Assistant in virtual machine 100 while Hermes dashboard, gateway, ngrok tunnel, and phone bridge run directly on the host.</desc>
+              <defs>
+                <marker id="arrow-muted" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="#5f6671"/></marker>
+                <marker id="arrow-accent" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="#c64e32"/></marker>
+                <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="#35617d"/></marker>
+              </defs>
+
+              <text class="interface-index" x="76" y="42">EXT.01</text>
+              <text class="interface-name" x="76" y="64">Home network</text>
+              <text class="interface-detail" x="76" y="82">phones · tablets · automations</text>
+              <line class="interface-rule" x1="76" y1="96" x2="272" y2="96"/>
+
+              <text class="interface-index" x="382" y="42">EXT.02</text>
+              <text class="interface-name" x="382" y="64">Twilio</text>
+              <text class="interface-detail" x="382" y="82">inbound voice</text>
+              <line class="interface-rule" x1="382" y1="96" x2="548" y2="96"/>
+
+              <text class="interface-index" x="654" y="42">EXT.03</text>
+              <text class="interface-name" x="654" y="64">Browser</text>
+              <text class="interface-detail" x="654" y="82">dashboard session</text>
+              <line class="interface-rule" x1="654" y1="96" x2="820" y2="96"/>
+
+              <text class="interface-index" x="930" y="42">EXT.04</text>
+              <text class="interface-name" x="930" y="64">WhatsApp</text>
+              <text class="interface-detail" x="930" y="82">family bot messages</text>
+              <line class="interface-rule" x1="930" y1="96" x2="1122" y2="96"/>
+
+              <rect class="boundary" x="40" y="134" width="1200" height="492"/>
+              <line class="corner-tick" x1="40" y1="134" x2="64" y2="134"/>
+              <line class="corner-tick" x1="40" y1="134" x2="40" y2="158"/>
+              <line class="corner-tick" x1="1216" y1="134" x2="1240" y2="134"/>
+              <line class="corner-tick" x1="1240" y1="134" x2="1240" y2="158"/>
+              <text class="boundary-label" x="64" y="158">PHYSICAL HOST / NUC</text>
+
+              <rect class="boundary-inner" x="76" y="180" width="1128" height="376"/>
+              <text class="boundary-label" x="100" y="204">PROXMOX VE 9.2.2 / KERNEL 7.0.2-6-PVE</text>
+
+              <text class="section-number" x="112" y="266">03</text>
+              <text class="boundary-label" x="112" y="286">VIRTUAL MACHINE / VM 100</text>
+              <line class="group-rule" x1="112" y1="300" x2="468" y2="300"/>
+
+              <text class="section-number" x="526" y="266">04</text>
+              <text class="boundary-label" x="526" y="286">HOST-NATIVE HERMES SERVICES</text>
+              <line class="group-rule" x1="526" y1="300" x2="1160" y2="300"/>
+
+              <path class="connector" d="M184,96 V330"/>
+              <rect class="label-mask" x="196" y="204" width="44" height="16"/>
+              <text class="connector-label" x="218" y="215">LOCAL</text>
+
+              <path class="connector-blue" d="M466,96 V480 H548"/>
+              <rect class="label-mask" x="478" y="210" width="46" height="16"/>
+              <text class="connector-label connector-label-blue" x="501" y="221">VOICE</text>
+
+              <path class="connector" d="M736,96 V330"/>
+              <rect class="label-mask" x="748" y="204" width="50" height="16"/>
+              <text class="connector-label" x="773" y="215">WEB UI</text>
+
+              <path class="connector-accent" d="M1018,96 V330"/>
+              <rect class="label-mask" x="1030" y="204" width="70" height="16"/>
+              <text class="connector-label connector-label-accent" x="1065" y="215">MESSAGES</text>
+
+              <path class="connector-accent" d="M444,382 H548"/>
+              <rect class="label-mask" x="468" y="366" width="48" height="16"/>
+              <text class="connector-label connector-label-accent" x="492" y="377">HA API</text>
+
+              <path class="connector" d="M802,374 H872"/>
+              <rect class="label-mask" x="813" y="358" width="48" height="16"/>
+              <text class="connector-label" x="837" y="369">SESSION</text>
+
+              <path class="connector-blue" d="M802,480 H872"/>
+              <rect class="label-mask" x="815" y="464" width="44" height="16"/>
+              <text class="connector-label connector-label-blue" x="837" y="475">HTTPS</text>
+
+              <path class="connector-dashed" d="M1002,436 V414"/>
+              <rect class="label-mask" x="1014" y="416" width="68" height="16"/>
+              <text class="connector-label" x="1048" y="427">AGENT CALL</text>
+
+              <rect class="node-primary" x="136" y="330" width="308" height="132"/>
+              <rect class="node-stripe-accent" x="136" y="330" width="5" height="132"/>
+              <text class="node-type node-type-accent" x="160" y="354">AUTOMATION CORE</text>
+              <text class="node-name" x="160" y="383">Home Assistant OS</text>
+              <text class="node-detail" x="160" y="405">QEMU/KVM guest · local API</text>
+              <text class="node-detail" x="160" y="424">devices · scenes · automations</text>
+
+              <text class="metric-label" x="136" y="494">VCPU</text>
+              <text class="metric-value" x="136" y="512">2 cores</text>
+              <text class="metric-label" x="246" y="494">MEMORY</text>
+              <text class="metric-value" x="246" y="512">4 GB</text>
+              <text class="metric-label" x="356" y="494">NETWORK</text>
+              <text class="metric-value" x="356" y="512">VirtIO</text>
+
+              <rect class="node" x="548" y="330" width="254" height="88"/>
+              <rect class="node-stripe" x="548" y="330" width="5" height="88"/>
+              <text class="node-type" x="572" y="353">WEB SURFACE</text>
+              <text class="node-name" x="572" y="380">Hermes Dashboard</text>
+              <text class="node-detail" x="572" y="400">systemd user service</text>
+
+              <rect class="node-primary" x="872" y="330" width="254" height="88"/>
+              <rect class="node-stripe-accent" x="872" y="330" width="5" height="88"/>
+              <text class="node-type node-type-accent" x="896" y="353">MESSAGING GATEWAY</text>
+              <text class="node-name" x="896" y="380">Hermes Agent Gateway</text>
+              <text class="node-detail" x="896" y="400">WhatsApp bridge · bot mode</text>
+
+              <rect class="node-network" x="548" y="436" width="254" height="88"/>
+              <rect class="node-stripe-blue" x="548" y="436" width="5" height="88"/>
+              <text class="node-type node-type-blue" x="572" y="459">PUBLIC INGRESS</text>
+              <text class="node-name" x="572" y="486">ngrok Tunnel</text>
+              <text class="node-detail" x="572" y="506">Twilio webhook ingress</text>
+
+              <rect class="node" x="872" y="436" width="254" height="88"/>
+              <rect class="node-stripe" x="872" y="436" width="5" height="88"/>
+              <text class="node-type" x="896" y="459">VOICE SERVICE</text>
+              <text class="node-name" x="896" y="486">Hermes Phone Bridge</text>
+              <text class="node-detail" x="896" y="506">Twilio · Node.js</text>
+
+              <line class="status-rule" x1="76" y1="582" x2="1204" y2="582"/>
+              <text class="status-label" x="76" y="606">HOSTNAME</text>
+              <text class="status-value" x="150" y="606">nuc</text>
+              <text class="status-label" x="300" y="606">HERMES GATEWAY</text>
+              <text class="status-value" x="424" y="606">connected</text>
+              <text class="status-label" x="610" y="606">QUEUE</text>
+              <text class="status-value" x="662" y="606">0</text>
+              <text class="status-label" x="820" y="606">SERVICE MODEL</text>
+              <text class="status-value" x="938" y="606">VM + host-native</text>
+            </svg>
+          </div>
+
+          <figcaption>
+            <p><strong>Reading order:</strong> external interfaces enter from the top; the physical NUC and Proxmox boundaries contain the two runtime groups; arrows terminate at the exact service receiving each request.</p>
+            <p><strong>Scope:</strong> host and service details were read from the live NUC. The Home Assistant API and agent-call lines describe the logical integration, not a captured network trace.</p>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
