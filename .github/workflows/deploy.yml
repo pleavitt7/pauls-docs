@@ -26,6 +26,7 @@ jobs:
         uses: withastro/action@v6
         with:
           node-version: 24
+          build-cmd: npm test
 
   deploy:
     environment:

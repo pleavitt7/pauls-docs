@@ -234,6 +234,122 @@
     .figure-title { color: var(--ink); font-weight: 600; }
     .figure-meta { color: var(--muted); text-align: right; }
 
+    .scroll-notice,
+    .mobile-topology { display: none; }
+
+    .scroll-notice {
+      margin: 0;
+      padding: 12px 0;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      line-height: 1.5;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .mobile-topology {
+      border-bottom: 1px solid var(--line-strong);
+    }
+
+    .mobile-host-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .mobile-host-heading strong,
+    .mobile-host-heading span {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      line-height: 1.5;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .mobile-host-heading span {
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .mobile-routes {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .mobile-route {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .mobile-route:last-child { border-bottom: 0; }
+
+    .mobile-source,
+    .mobile-target { min-width: 0; }
+
+    .mobile-source strong,
+    .mobile-target strong {
+      display: block;
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+
+    .mobile-source span,
+    .mobile-target span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.8125rem;
+      line-height: 1.45;
+    }
+
+    .mobile-target {
+      padding-left: 12px;
+      border-left: 4px solid var(--ink);
+    }
+
+    .mobile-target.accent { border-left-color: var(--accent); }
+    .mobile-target.blue { border-left-color: var(--blue); }
+
+    .mobile-arrow {
+      color: var(--quiet);
+      font-family: var(--mono);
+      font-size: 1.25rem;
+      text-align: center;
+    }
+
+    .mobile-route-chain {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .mobile-chain {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .mobile-chain strong {
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 1rem;
+    }
+
+    .mobile-chain .blue { color: var(--blue); }
+    .mobile-chain .accent { color: var(--accent); }
+
     .diagram-scroll {
       width: 100%;
       overflow-x: auto;
@@ -310,7 +426,11 @@
       .index-section { border-top: 1px solid var(--line); }
     }
 
-    @media (max-width: 680px) {
+    @media (min-width: 761px) and (max-width: 1180px) {
+      .scroll-notice { display: block; }
+    }
+
+    @media (max-width: 760px) {
       .masthead { padding-top: 16px; }
       h1 { font-size: 3rem; }
       .standfirst { font-size: 1rem; }
@@ -319,14 +439,24 @@
       .figure-header { display: grid; gap: 5px; }
       .figure-meta { text-align: left; }
       figcaption { grid-template-columns: 1fr; }
+      .index-name,
+      .facts dt,
+      .legend li,
+      figcaption { font-size: 1rem; }
+      .index-detail,
+      .facts dd { font-size: 0.875rem; }
+      .diagram-scroll { display: none; }
+      .mobile-topology { display: block; }
     }
 
     @media print {
       main { padding: 0; }
       .page { width: 100%; max-width: none; padding: 0; }
       .content-grid { grid-template-columns: 190px minmax(0, 1fr); }
-      .diagram-scroll { overflow-x: visible; }
+      .diagram-scroll { display: block; overflow-x: visible; }
       svg { min-width: 0; }
+      .mobile-topology,
+      .scroll-notice { display: none; }
     }
   </style>
 </head>
@@ -382,6 +512,42 @@
           <div class="figure-header">
             <p class="figure-title">Runtime topology</p>
             <p class="figure-meta">Physical → virtualisation → services</p>
+          </div>
+
+          <p class="scroll-notice">The full topology keeps its readable scale. Scroll horizontally to inspect every service.</p>
+
+          <div class="mobile-topology" aria-label="Compact mobile runtime topology">
+            <div class="mobile-host-heading">
+              <strong>Physical NUC</strong>
+              <span>Proxmox VE 9.2.2</span>
+            </div>
+            <ol class="mobile-routes">
+              <li class="mobile-route">
+                <div class="mobile-source"><strong>Home network</strong><span>local access</span></div>
+                <span class="mobile-arrow" aria-hidden="true">→</span>
+                <div class="mobile-target accent"><strong>Home Assistant OS</strong><span>VM 100 · 2 vCPU · 4 GB</span></div>
+              </li>
+              <li class="mobile-route">
+                <div class="mobile-source"><strong>Browser</strong><span>web session</span></div>
+                <span class="mobile-arrow" aria-hidden="true">→</span>
+                <div class="mobile-target"><strong>Hermes Dashboard</strong><span>host-native service</span></div>
+              </li>
+              <li class="mobile-route">
+                <div class="mobile-source"><strong>WhatsApp</strong><span>family messages</span></div>
+                <span class="mobile-arrow" aria-hidden="true">→</span>
+                <div class="mobile-target accent"><strong>Agent Gateway</strong><span>bot-mode bridge</span></div>
+              </li>
+              <li class="mobile-route mobile-route-chain">
+                <div class="mobile-chain">
+                  <strong>Twilio</strong><span class="blue">→</span><strong>ngrok</strong><span class="blue">→</span><strong>Phone Bridge</strong><span>→</span><strong>Agent Gateway</strong>
+                </div>
+              </li>
+              <li class="mobile-route">
+                <div class="mobile-source"><strong>Home Assistant API</strong><span>automation tools</span></div>
+                <span class="mobile-arrow" aria-hidden="true">→</span>
+                <div class="mobile-target"><strong>Hermes services</strong><span>logical integration</span></div>
+              </li>
+            </ol>
           </div>
 
           <div class="diagram-scroll">

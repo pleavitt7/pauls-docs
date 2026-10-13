@@ -17,20 +17,28 @@ The development server is available at `http://localhost:4321`.
 
 ```sh
 npm run build
+npm test
 npm run preview
 ```
 
 Astro writes the production site to `dist/`.
 
-## Diagram source
+## Adding diagrams
 
-The current self-contained architecture diagram is stored at:
+Each diagram has two parts:
 
-```text
-public/diagrams/proxmox-hermes-architecture.html
-```
+1. A self-contained HTML file under `public/diagrams/`.
+2. A Markdown catalogue entry under `src/content/diagrams/`.
 
-The home page embeds that file and also provides a direct link to it.
+The Markdown frontmatter supplies the title, summary, date, display order,
+tags, and path to the HTML diagram. The home-page catalogue and dynamic detail
+route are generated from the collection automatically.
+
+Markdown `##` and `###` headings become the per-page **On this page** table of
+contents. Add or remove headings in the entry; no navigation markup needs to be
+edited manually.
+
+Use `src/content/diagrams/proxmox-hermes.md` as the reference entry.
 
 ## GitHub Pages deployment
 

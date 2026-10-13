@@ -1,72 +1,44 @@
 ---
-const diagramUrl = `${import.meta.env.BASE_URL}diagrams/proxmox-hermes-architecture.html`;
+import { getCollection } from 'astro:content';
+import DiagramCatalogue from '../components/DiagramCatalogue.astro';
+import SiteLayout from '../layouts/SiteLayout.astro';
+
+const diagrams = (await getCollection('diagrams')).sort((a, b) => {
+  return a.data.order - b.data.order || b.data.date.getTime() - a.data.date.getTime();
+});
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
-    <meta name="description" content="Architecture diagrams and notes for Paul's home infrastructure." />
-    <title>Home Infrastructure</title>
-  </head>
-  <body>
-    <main>
-      <header>
-        <div class="kicker">
-          <span>Home infrastructure</span>
-          <span>System notes and diagrams</span>
-        </div>
-        <div class="heading-grid">
-          <h1>Architecture<br />plates</h1>
-          <p>
-            A small, static record of the services running on the home NUC,
-            beginning with Proxmox, Home Assistant, and Hermes.
-          </p>
-        </div>
-      </header>
+<SiteLayout
+  title="Home Infrastructure"
+  description="Architecture diagrams and notes for Paul's home infrastructure."
+>
+  <main>
+    <section class="hero" aria-labelledby="page-title">
+      <div class="kicker">
+        <span>Home infrastructure</span>
+        <span>System notes and diagrams</span>
+      </div>
+      <div class="hero-grid">
+        <h1 id="page-title">Architecture<br />plates</h1>
+        <p>
+          A growing static record of the services running on the home NUC.
+          Add a Markdown entry to the diagram collection and it appears in this catalogue automatically.
+        </p>
+      </div>
+    </section>
 
-      <section aria-labelledby="diagram-title">
-        <div class="section-heading">
-          <div>
-            <p class="number">01</p>
-            <h2 id="diagram-title">NUC automation and agent architecture</h2>
-          </div>
-          <a href={diagramUrl}>Open full diagram <span aria-hidden="true">↗</span></a>
-        </div>
-
-        <div class="preview">
-          <iframe
-            src={diagramUrl}
-            title="NUC, Proxmox, Home Assistant, and Hermes architecture diagram"
-            loading="eager"
-          ></iframe>
-        </div>
-      </section>
-    </main>
-  </body>
-</html>
+    <section class="contents-section" aria-labelledby="contents-title">
+      <h2 id="contents-title" class="visually-hidden">Diagram contents</h2>
+      <DiagramCatalogue entries={diagrams} />
+    </section>
+  </main>
+</SiteLayout>
 
 <style>
-  :root {
-    color: #22262e;
-    background: #f2efe8;
-    font-family: Inter, "Helvetica Neue", Arial, sans-serif;
-    font-synthesis: none;
-  }
+  main { padding-top: 34px; }
 
-  * { box-sizing: border-box; }
-  body { margin: 0; }
-
-  main {
-    width: min(100%, 1500px);
-    margin: 0 auto;
-    padding: 34px;
-  }
-
-  header {
-    padding: 22px 0 32px;
-    border-top: 3px solid #22262e;
+  .hero {
+    padding: 24px 0 38px;
     border-bottom: 1px solid rgba(34, 38, 46, 0.42);
   }
 
@@ -84,9 +56,9 @@ const diagramUrl = `${import.meta.env.BASE_URL}diagrams/proxmox-hermes-architect
 
   .kicker span:first-child { color: #c64e32; }
 
-  .heading-grid {
+  .hero-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 400px);
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
     gap: 48px;
     align-items: end;
     padding-top: 24px;
@@ -101,74 +73,34 @@ const diagramUrl = `${import.meta.env.BASE_URL}diagrams/proxmox-hermes-architect
     line-height: 0.92;
   }
 
-  .heading-grid p {
-    max-width: 42ch;
+  .hero-grid p {
+    max-width: 46ch;
     margin: 0;
     color: #5f6671;
     font-size: 1rem;
     line-height: 1.65;
   }
 
-  section { padding-top: 36px; }
+  .contents-section { padding-top: 36px; }
 
-  .section-heading {
-    display: flex;
-    justify-content: space-between;
-    gap: 24px;
-    align-items: end;
-    padding: 16px 0;
-    border-top: 1px solid #22262e;
-  }
-
-  .section-heading > div {
-    display: grid;
-    grid-template-columns: 38px minmax(0, 1fr);
-    gap: 14px;
-    align-items: baseline;
-  }
-
-  .number {
-    margin: 0;
-    color: #7b818a;
-    font-family: "SFMono-Regular", Consolas, monospace;
-    font-size: 0.6875rem;
-  }
-
-  h2 {
-    margin: 0;
-    font-size: 1.125rem;
-    font-weight: 600;
-  }
-
-  a {
-    color: #22262e;
-    font-size: 0.875rem;
-    font-weight: 600;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 4px;
-  }
-
-  a:hover { color: #c64e32; }
-
-  .preview {
-    height: min(78vh, 1000px);
-    min-height: 620px;
-    border-top: 1px solid rgba(34, 38, 46, 0.18);
-    border-bottom: 1px solid rgba(34, 38, 46, 0.42);
-  }
-
-  iframe {
-    width: 100%;
-    height: 100%;
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
     border: 0;
-    background: #f2efe8;
   }
 
   @media (max-width: 760px) {
-    main { padding: 24px 20px; }
-    .heading-grid { grid-template-columns: 1fr; gap: 22px; }
+    main { padding-top: 20px; }
+    .hero { padding-top: 16px; }
+    .hero-grid { grid-template-columns: 1fr; gap: 22px; }
     h1 { font-size: 3.5rem; }
-    .section-heading { display: grid; align-items: start; }
-    .preview { min-height: 560px; }
+    .hero-grid p { font-size: 1rem; }
+    .contents-section { padding-top: 28px; }
   }
 </style>
