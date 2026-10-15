@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>NUC Infrastructure System Plate</title>
+  <script>
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.has('embed')) document.documentElement.classList.add('embedded');
+  </script>
   <style>
     :root {
       --paper: #f2efe8;
@@ -416,6 +420,84 @@
 
     figcaption p { margin: 0; }
     figcaption strong { color: var(--ink); font-weight: 600; }
+
+    .embedded,
+    .embedded body,
+    .embedded main,
+    .embedded .page,
+    .embedded .content-grid,
+    .embedded figure,
+    .embedded .diagram-scroll {
+      height: 100%;
+    }
+
+    .embedded,
+    .embedded body { overflow: hidden; }
+
+    .embedded main { padding: 0; }
+
+    .embedded .page {
+      width: 100%;
+      max-width: none;
+      padding: 0;
+    }
+
+    .embedded .masthead,
+    .embedded .index,
+    .embedded .figure-header,
+    .embedded .scroll-notice,
+    .embedded .mobile-topology,
+    .embedded figcaption { display: none; }
+
+    .embedded .content-grid {
+      display: block;
+      padding: 0;
+    }
+
+    .embedded figure { border: 0; }
+
+    .embedded .diagram-scroll {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 0;
+    }
+
+    .embedded svg {
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+    }
+
+    @media (min-width: 1500px) {
+      main { padding: 20px 0 28px; }
+      .page { width: min(100%, 1800px); }
+      .masthead {
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 430px);
+        gap: 40px;
+        padding: 16px 0 20px;
+      }
+      h1 {
+        max-width: none;
+        font-size: clamp(3rem, 3.6vw, 4rem);
+      }
+      .content-grid {
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 28px;
+        padding-top: 24px;
+      }
+      svg {
+        width: min(100%, 1280px);
+      }
+    }
+
+    @media (min-width: 1700px) {
+      h1 {
+        white-space: nowrap;
+        text-wrap: nowrap;
+      }
+    }
 
     @media (max-width: 980px) {
       main { padding-top: 24px; }

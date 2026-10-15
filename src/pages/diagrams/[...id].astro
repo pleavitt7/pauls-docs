@@ -20,6 +20,7 @@ const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
 const base = import.meta.env.BASE_URL;
 const diagramUrl = `${base}${entry.data.diagram}`;
+const diagramEmbedUrl = `${diagramUrl}?embed=1`;
 const homeUrl = base;
 const formattedDate = entry.data.date.toLocaleDateString('en-AU', {
   day: 'numeric',
@@ -47,7 +48,7 @@ const formattedDate = entry.data.date.toLocaleDateString('en-AU', {
       <article>
         <div class="diagram-preview">
           <iframe
-            src={diagramUrl}
+            src={diagramEmbedUrl}
             title={`${entry.data.title} diagram`}
             loading="eager"
           ></iframe>
@@ -131,8 +132,8 @@ const formattedDate = entry.data.date.toLocaleDateString('en-AU', {
   aside { min-width: 0; }
 
   .diagram-preview {
-    height: min(76vh, 980px);
-    min-height: 660px;
+    aspect-ratio: 1280 / 700;
+    max-height: 700px;
     border-top: 1px solid #22262e;
     border-bottom: 1px solid rgba(34, 38, 46, 0.42);
   }

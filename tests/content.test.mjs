@@ -27,5 +27,13 @@ test('a diagram detail page includes its embedded diagram and heading TOC', asyn
   assert.match(html, /href="#overview"/);
   assert.match(html, /href="#routes"/);
   assert.match(html, /href="#deployment-notes"/);
-  assert.match(html, /src="(?:\/[^\/"]+)?\/diagrams\/proxmox-hermes-architecture\.html"/);
+  assert.match(html, /src="(?:\/[^\/"]+)?\/diagrams\/proxmox-hermes-architecture\.html\?embed=1"/);
+});
+
+test('the embedded diagram removes nested scrolling on desktop', async () => {
+  const html = await readBuiltPage('diagrams/proxmox-hermes-architecture.html');
+
+  assert.match(html, /\.embedded \.masthead/);
+  assert.match(html, /\.embedded \.diagram-scroll/);
+  assert.match(html, /searchParams\.has\(['"]embed['"]\)/);
 });
