@@ -10,6 +10,7 @@
     "build": "astro build",
     "test": "npm run build && node --test tests/content.test.mjs",
     "test:e2e": "playwright test --config tests/e2e/playwright.config.mjs",
+    "test:plates": "node tests/e2e/wendell-motion.mjs && node tests/e2e/wendell-embed.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },

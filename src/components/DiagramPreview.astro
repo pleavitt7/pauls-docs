@@ -2,29 +2,65 @@
 interface Props {
   src: string;
   title: string;
+  /** Frame aspect ratio, e.g. '1280 / 700'. */
+  ratio?: string;
+  /** Cap the frame height on large screens. */
+  maxHeight?: string;
+  /**
+   * Below this viewport width (rem) the plate is linked instead of embedded.
+   * Plates with a dense type ramp need a wide frame to stay legible, and an
+   * embedded plate that is too narrow either shrinks its type or nests a
+   * scrollbar inside the page.
+   */
+  linkBelow?: number;
+  linkLabel?: string;
+  /**
+   * Extra query string for the embedded frame, e.g. '&motion=step&step=6' so a
+   * motional plate opens on its complete frame instead of an empty first step.
+   */
+  embedParams?: string;
 }
 
-const { src, title } = Astro.props;
+const {
+  src,
+  title,
+  ratio = '1280 / 700',
+  maxHeight = '700px',
+  linkBelow = 50,
+  linkLabel = 'Open the full diagram',
+  embedParams = '',
+} = Astro.props;
+
 const base = import.meta.env.BASE_URL;
 const diagramUrl = `${base}${src}`;
-const embedUrl = `${diagramUrl}?embed=1`;
+const embedUrl = `${diagramUrl}?embed=1${embedParams}`;
+const id = `frame-${src.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`;
 ---
 
-<div class="diagram-preview">
-  <iframe
-    data-diagram-frame
-    src={embedUrl}
-    title={`${title} diagram`}
-    loading="eager"
-  ></iframe>
+<style is:inline set:html={`
+  .${id} { display: block; }
+  .${id}-link { display: none; }
+  @media (max-width: ${linkBelow}rem) {
+    .${id} { display: none; }
+    .${id}-link { display: flex; }
+  }
+`}></style>
+
+<div
+  class:list={['diagram-preview', id]}
+  style={`--preview-ratio: ${ratio}; --preview-max-height: ${maxHeight};`}
+>
+  <iframe data-diagram-frame src={embedUrl} title={`${title} diagram`} loading="eager"></iframe>
 </div>
-<a class="mobile-open" href={diagramUrl}>
-  Open responsive diagram <span aria-hidden="true">↗</span>
+<a class:list={['mobile-open', `${id}-link`]} href={diagramUrl}>
+  {linkLabel} <span aria-hidden="true">↗</span>
 </a>
 
 <script is:inline>
   (() => {
     const frames = document.querySelectorAll('[data-diagram-frame]');
+    if (!frames.length) return;
+
     const readTokens = () => {
       const styles = getComputedStyle(document.documentElement);
       const fallback = getComputedStyle(document.body).fontFamily;
@@ -53,11 +89,7 @@ const embedUrl = `${diagramUrl}?embed=1`;
       sendTheme(frame);
     });
 
-    const themeObserver = new MutationObserver(() => {
-      frames.forEach(sendTheme);
-    });
-
-    themeObserver.observe(document.documentElement, {
+    new MutationObserver(() => frames.forEach(sendTheme)).observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['data-theme'],
     });
@@ -67,8 +99,8 @@ const embedUrl = `${diagramUrl}?embed=1`;
 <style>
   .diagram-preview {
     width: 100%;
-    aspect-ratio: 1280 / 700;
-    max-height: 700px;
+    aspect-ratio: var(--preview-ratio);
+    max-height: var(--preview-max-height);
     margin-block: 1.5rem 2rem;
     overflow: hidden;
     border: 1px solid var(--sl-color-gray-5);
@@ -84,25 +116,18 @@ const embedUrl = `${diagramUrl}?embed=1`;
     color-scheme: light dark;
   }
 
-  .mobile-open { display: none; }
-
-  @media (max-width: 50rem) {
-    .diagram-preview { display: none; }
-
-    .mobile-open {
-      display: flex;
-      min-height: 3rem;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      margin-block: 1.5rem 2rem;
-      padding: 0.875rem 1rem;
-      border: 1px solid var(--sl-color-gray-5);
-      border-radius: min(2vw, 0.5rem);
-      background: var(--sl-color-bg-nav);
-      color: var(--sl-color-text-accent);
-      font-weight: 600;
-      text-decoration: none;
-    }
+  .mobile-open {
+    min-height: 3rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block: 1.5rem 2rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: min(2vw, 0.5rem);
+    background: var(--sl-color-bg-nav);
+    color: var(--sl-color-text-accent);
+    font-weight: 600;
+    text-decoration: none;
   }
 </style>

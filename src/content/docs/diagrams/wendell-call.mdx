@@ -1,0 +1,75 @@
+---
+title: Phone call sequence
+description: An animated sequence diagram of an inbound call to Wendell, from the Twilio webhook through the live voice model to the calendar write.
+date: 2026-10-16
+order: 2
+tags:
+  - Twilio
+  - GPT-Live
+  - Wendell
+diagram: diagrams/wendell-call-sequence.html
+tableOfContents: false
+sidebar:
+  order: 2
+head:
+  # The plate needs a wide frame to keep its label type legible, so this page
+  # spends the space the table of contents would otherwise take.
+  - tag: style
+    content: ':root { --sl-content-width: 92rem; }'
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+import DiagramPreview from '../../../components/DiagramPreview.astro';
+
+Wendell is the voice assistant behind the Twilio number. This sequence covers one
+inbound call, from the webhook that opens it to the calendar event that closes it.
+Step through the six stages, or replay the whole call.
+
+<DiagramPreview
+  src="diagrams/wendell-call-sequence.html"
+  title="Wendell phone call sequence"
+  ratio="1120 / 990"
+  maxHeight="1080px"
+  linkBelow={72}
+  linkLabel="Open the animated sequence"
+  embedParams="&motion=static"
+/>
+
+The figure above is the complete sequence. To watch it build step by step, open the
+animated plate — it plays the six stages with playback controls, and follows your
+system theme on its own.
+
+<LinkCard
+  href={`${import.meta.env.BASE_URL}diagrams/wendell-call-sequence.html`}
+  title="Watch the sequence animate"
+  description="Step through all twelve messages, or replay the whole call. Works without JavaScript and honours reduced motion."
+/>
+
+## System overview
+
+A call is answered by a live voice model. Booking work is handed off to a narrow
+backend agent, and that agent is the only part of the system holding Google
+Calendar access — the public voice profile stays tool-disabled.
+
+## Routes
+
+Twilio posts the call to `/incoming-call` through the ngrok tunnel. The bridge
+checks the caller against the allowlist, then answers with media-stream TwiML that
+carries the caller number and call SID, and Twilio opens the media websocket. Audio
+streams to the live voice model in both directions while the bridge records the
+call.
+
+## Booking
+
+The initial public booking handoff starts from a 1200 ms settled-transcript
+watchdog rather than waiting on a native delegation notice; later turns use native
+delegation. The backend reads calendar availability, offers a slot, and only writes
+once the caller confirms out loud.
+
+## Deployment notes
+
+The plate is a self-contained HTML artifact under `public/diagrams/`. Its motion
+controller is the canonical one from the diagram-design skill, so the static frame,
+the reduced-motion frame, and the no-JavaScript frame all carry the complete
+sequence. Embedded it follows the site theme and fonts; opened on its own it keeps
+its own paper, ink, and typefaces.
