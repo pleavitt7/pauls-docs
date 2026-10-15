@@ -1,6 +1,6 @@
 ---
 title: NUC automation and agent architecture
-summary: Runtime topology for Proxmox, Home Assistant, and the host-native Hermes services on the home NUC.
+description: Runtime topology for Proxmox, Home Assistant, and the host-native Hermes services on the home NUC.
 date: 2026-10-13
 order: 1
 tags:
@@ -8,9 +8,25 @@ tags:
   - Home Assistant
   - Hermes
 diagram: diagrams/proxmox-hermes-architecture.html
+sidebar:
+  order: 1
 ---
 
-## Overview
+import { Badge } from '@astrojs/starlight/components';
+import DiagramPreview from '../../../components/DiagramPreview.astro';
+
+<div class="tag-row">
+  <Badge text="Proxmox" variant="note" />
+  <Badge text="Home Assistant" variant="success" />
+  <Badge text="Hermes" variant="tip" />
+</div>
+
+<DiagramPreview
+  src="diagrams/proxmox-hermes-architecture.html"
+  title="NUC automation and agent architecture"
+/>
+
+## System overview
 
 The physical NUC runs Proxmox VE 9.2.2. Home Assistant is isolated in VM 100 with two virtual CPU cores and 4 GB of memory, while Hermes runs directly on the Proxmox host as user-level services.
 

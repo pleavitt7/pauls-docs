@@ -6,24 +6,73 @@
   <title>NUC Infrastructure System Plate</title>
   <script>
     const searchParams = new URLSearchParams(window.location.search);
-    if (searchParams.has('embed')) document.documentElement.classList.add('embedded');
+    const isEmbedded = searchParams.has('embed');
+    const preferredTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    const initialTheme = searchParams.get('theme') || preferredTheme;
+
+    document.documentElement.dataset.theme = initialTheme === 'light' ? 'light' : 'dark';
+    if (isEmbedded) document.documentElement.classList.add('embedded');
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin || event.data?.type !== 'diagram-theme') return;
+      document.documentElement.dataset.theme = event.data.theme === 'light' ? 'light' : 'dark';
+
+      const fonts = event.data.fonts;
+      if (fonts && typeof fonts === 'object') {
+        for (const token of ['--sans', '--mono']) {
+          if (typeof fonts[token] === 'string' && fonts[token].trim()) {
+            document.documentElement.style.setProperty(token, fonts[token]);
+          }
+        }
+      }
+    });
+
+    if (!isEmbedded && !searchParams.has('theme')) {
+      window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (event) => {
+        document.documentElement.dataset.theme = event.matches ? 'light' : 'dark';
+      });
+    }
   </script>
   <style>
     :root {
-      --paper: #f2efe8;
-      --paper-deep: #e9e5dc;
-      --ink: #22262e;
-      --muted: #5f6671;
-      --quiet: #7b818a;
-      --line: rgba(34, 38, 46, 0.18);
-      --line-strong: rgba(34, 38, 46, 0.42);
-      --accent: #c64e32;
-      --accent-wash: rgba(198, 78, 50, 0.07);
-      --blue: #35617d;
-      --blue-wash: rgba(53, 97, 125, 0.06);
-      --sans: InterVariable, Inter, "Helvetica Neue", Arial, sans-serif;
-      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-      --serif: Georgia, "Times New Roman", serif;
+      /* Fallbacks mirror Starlight's own font tokens for standalone viewing. */
+      --sans: var(--sl-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif);
+      --mono: var(--sl-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+    }
+
+    :root,
+    [data-theme="light"] {
+      color-scheme: light;
+      --paper: #ffffff;
+      --paper-deep: #f6f7f9;
+      --ink: #353841;
+      --muted: #555962;
+      --quiet: #7a7f89;
+      --line: rgba(53, 56, 65, 0.14);
+      --line-strong: rgba(53, 56, 65, 0.32);
+      --accent: #3d50f5;
+      --accent-wash: rgba(61, 80, 245, 0.08);
+      --blue: #0e7490;
+      --blue-wash: rgba(14, 116, 144, 0.08);
+      --node-bg: rgba(255, 255, 255, 0.94);
+      --boundary-wash: rgba(53, 56, 65, 0.02);
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --paper: #17181c;
+      --paper-deep: #23262f;
+      --ink: #e7e8ec;
+      --muted: #c1c3c8;
+      --quiet: #888c96;
+      --line: rgba(193, 195, 200, 0.16);
+      --line-strong: rgba(193, 195, 200, 0.36);
+      --accent: #7390ff;
+      --accent-wash: rgba(115, 144, 255, 0.12);
+      --blue: #5bbad5;
+      --blue-wash: rgba(91, 186, 213, 0.12);
+      --node-bg: rgba(35, 38, 47, 0.96);
+      --boundary-wash: rgba(231, 232, 236, 0.025);
     }
 
     * { box-sizing: border-box; }
@@ -78,7 +127,7 @@
     h1 {
       max-width: 19ch;
       margin: 0;
-      font-family: var(--serif);
+      font-family: var(--sans);
       font-size: clamp(3rem, 5vw, 5rem);
       font-weight: 400;
       letter-spacing: -0.04em;
@@ -238,18 +287,7 @@
     .figure-title { color: var(--ink); font-weight: 600; }
     .figure-meta { color: var(--muted); text-align: right; }
 
-    .scroll-notice,
     .mobile-topology { display: none; }
-
-    .scroll-notice {
-      margin: 0;
-      padding: 12px 0;
-      color: var(--muted);
-      font-family: var(--mono);
-      font-size: 0.75rem;
-      line-height: 1.5;
-      border-bottom: 1px solid var(--line);
-    }
 
     .mobile-topology {
       border-bottom: 1px solid var(--line-strong);
@@ -361,16 +399,19 @@
       scrollbar-color: var(--line-strong) transparent;
     }
 
-    svg {
+    /* The plate keeps its authored proportions and scales with the column so no
+       label is ever clipped. 880 is the readability floor: below that the 9-unit
+       mono captions shrink past legibility, so the scroller takes over. */
+    .diagram-scroll svg {
       display: block;
       width: 100%;
-      min-width: 1280px;
+      min-width: 880px;
       height: auto;
       background: var(--paper);
     }
 
     .boundary { fill: none; stroke: var(--line-strong); stroke-width: 1; }
-    .boundary-inner { fill: rgba(34, 38, 46, 0.015); stroke: var(--line); stroke-width: 1; stroke-dasharray: 5 5; }
+    .boundary-inner { fill: var(--boundary-wash); stroke: var(--line); stroke-width: 1; stroke-dasharray: 5 5; }
     .group-rule { stroke: var(--line-strong); stroke-width: 1; }
     .corner-tick { stroke: var(--ink); stroke-width: 1.5; }
     .interface-rule { stroke: var(--line); stroke-width: 1; }
@@ -379,14 +420,13 @@
     .interface-name { fill: var(--ink); font-family: var(--sans); font-size: 15px; font-weight: 600; }
     .interface-detail { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     .boundary-label { fill: var(--quiet); font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.13em; }
-    .section-number { fill: var(--line-strong); font-family: var(--serif); font-size: 38px; }
+    .section-number { fill: var(--line-strong); font-family: var(--sans); font-size: 38px; font-weight: 600; }
 
-    .node { fill: rgba(242, 239, 232, 0.9); stroke: var(--line-strong); stroke-width: 1; }
-    .node-primary { fill: var(--accent-wash); stroke: var(--accent); stroke-width: 1.4; }
-    .node-network { fill: var(--blue-wash); stroke: var(--blue); stroke-width: 1.2; }
-    .node-stripe { fill: var(--ink); }
-    .node-stripe-accent { fill: var(--accent); }
-    .node-stripe-blue { fill: var(--blue); }
+    /* Emphasis for the highlighted services comes from the tinted fill, the coloured
+       stroke, and the coloured type label — not from a decorative edge rail. */
+    .node { fill: var(--node-bg); stroke: var(--line-strong); stroke-width: 1; }
+    .node-primary { fill: var(--accent-wash); stroke: var(--accent); stroke-width: 1.6; }
+    .node-network { fill: var(--blue-wash); stroke: var(--blue); stroke-width: 1.4; }
 
     .node-type { fill: var(--quiet); font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.11em; }
     .node-type-accent { fill: var(--accent); }
@@ -404,6 +444,9 @@
     .connector-label { fill: var(--muted); font-family: var(--mono); font-size: 9px; letter-spacing: 0.07em; text-anchor: middle; }
     .connector-label-accent { fill: var(--accent); }
     .connector-label-blue { fill: var(--blue); }
+    .marker-muted { fill: var(--muted); }
+    .marker-accent { fill: var(--accent); }
+    .marker-blue { fill: var(--blue); }
     .status-rule { stroke: var(--line); stroke-width: 1; }
     .status-label { fill: var(--quiet); font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; }
     .status-value { fill: var(--ink); font-family: var(--mono); font-size: 10px; font-weight: 600; }
@@ -445,7 +488,6 @@
     .embedded .masthead,
     .embedded .index,
     .embedded .figure-header,
-    .embedded .scroll-notice,
     .embedded .mobile-topology,
     .embedded figcaption { display: none; }
 
@@ -487,9 +529,7 @@
         gap: 28px;
         padding-top: 24px;
       }
-      svg {
-        width: min(100%, 1280px);
-      }
+      .diagram-scroll { max-width: 1280px; }
     }
 
     @media (min-width: 1700px) {
@@ -508,9 +548,7 @@
       .index-section { border-top: 1px solid var(--line); }
     }
 
-    @media (min-width: 761px) and (max-width: 1180px) {
-      .scroll-notice { display: block; }
-    }
+    /* The plate scales, so the notice only matters where the canvas is hidden. */
 
     @media (max-width: 760px) {
       .masthead { padding-top: 16px; }
@@ -536,9 +574,7 @@
       .page { width: 100%; max-width: none; padding: 0; }
       .content-grid { grid-template-columns: 190px minmax(0, 1fr); }
       .diagram-scroll { display: block; overflow-x: visible; }
-      svg { min-width: 0; }
-      .mobile-topology,
-      .scroll-notice { display: none; }
+      .mobile-topology { display: none; }
     }
   </style>
 </head>
@@ -596,7 +632,6 @@
             <p class="figure-meta">Physical → virtualisation → services</p>
           </div>
 
-          <p class="scroll-notice">The full topology keeps its readable scale. Scroll horizontally to inspect every service.</p>
 
           <div class="mobile-topology" aria-label="Compact mobile runtime topology">
             <div class="mobile-host-heading">
@@ -637,9 +672,9 @@
               <title id="system-plate-title">NUC infrastructure runtime topology</title>
               <desc id="system-plate-desc">Home network access, Twilio, a browser, and WhatsApp connect to a physical NUC. Proxmox runs Home Assistant in virtual machine 100 while Hermes dashboard, gateway, ngrok tunnel, and phone bridge run directly on the host.</desc>
               <defs>
-                <marker id="arrow-muted" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="#5f6671"/></marker>
-                <marker id="arrow-accent" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="#c64e32"/></marker>
-                <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="#35617d"/></marker>
+                <marker id="arrow-muted" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path class="marker-muted" d="M0,0 L8,4 L0,8 Z"/></marker>
+                <marker id="arrow-accent" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path class="marker-accent" d="M0,0 L8,4 L0,8 Z"/></marker>
+                <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path class="marker-blue" d="M0,0 L8,4 L0,8 Z"/></marker>
               </defs>
 
               <text class="interface-index" x="76" y="42">EXT.01</text>
@@ -712,8 +747,7 @@
               <rect class="label-mask" x="1014" y="416" width="68" height="16"/>
               <text class="connector-label" x="1048" y="427">AGENT CALL</text>
 
-              <rect class="node-primary" x="136" y="330" width="308" height="132"/>
-              <rect class="node-stripe-accent" x="136" y="330" width="5" height="132"/>
+              <rect class="node-primary" x="136" y="330" width="308" height="132" rx="8"/>
               <text class="node-type node-type-accent" x="160" y="354">AUTOMATION CORE</text>
               <text class="node-name" x="160" y="383">Home Assistant OS</text>
               <text class="node-detail" x="160" y="405">QEMU/KVM guest · local API</text>
@@ -726,26 +760,22 @@
               <text class="metric-label" x="356" y="494">NETWORK</text>
               <text class="metric-value" x="356" y="512">VirtIO</text>
 
-              <rect class="node" x="548" y="330" width="254" height="88"/>
-              <rect class="node-stripe" x="548" y="330" width="5" height="88"/>
+              <rect class="node" x="548" y="330" width="254" height="88" rx="8"/>
               <text class="node-type" x="572" y="353">WEB SURFACE</text>
               <text class="node-name" x="572" y="380">Hermes Dashboard</text>
               <text class="node-detail" x="572" y="400">systemd user service</text>
 
-              <rect class="node-primary" x="872" y="330" width="254" height="88"/>
-              <rect class="node-stripe-accent" x="872" y="330" width="5" height="88"/>
+              <rect class="node-primary" x="872" y="330" width="254" height="88" rx="8"/>
               <text class="node-type node-type-accent" x="896" y="353">MESSAGING GATEWAY</text>
               <text class="node-name" x="896" y="380">Hermes Agent Gateway</text>
               <text class="node-detail" x="896" y="400">WhatsApp bridge · bot mode</text>
 
-              <rect class="node-network" x="548" y="436" width="254" height="88"/>
-              <rect class="node-stripe-blue" x="548" y="436" width="5" height="88"/>
+              <rect class="node-network" x="548" y="436" width="254" height="88" rx="8"/>
               <text class="node-type node-type-blue" x="572" y="459">PUBLIC INGRESS</text>
               <text class="node-name" x="572" y="486">ngrok Tunnel</text>
               <text class="node-detail" x="572" y="506">Twilio webhook ingress</text>
 
-              <rect class="node" x="872" y="436" width="254" height="88"/>
-              <rect class="node-stripe" x="872" y="436" width="5" height="88"/>
+              <rect class="node" x="872" y="436" width="254" height="88" rx="8"/>
               <text class="node-type" x="896" y="459">VOICE SERVICE</text>
               <text class="node-name" x="896" y="486">Hermes Phone Bridge</text>
               <text class="node-detail" x="896" y="506">Twilio · Node.js</text>
