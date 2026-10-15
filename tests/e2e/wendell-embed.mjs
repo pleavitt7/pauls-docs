@@ -45,6 +45,25 @@ const measure = async (context, url, theme) => {
       siteFont: getComputedStyle(document.documentElement).fontFamily.split(',')[0].trim(),
       plateFont: label ? getComputedStyle(label).fontFamily.split(',')[0].trim() : null,
       motionMode: root?.dataset.motionMode ?? null,
+      lifeline: d ? (() => {
+        const g = d.querySelector('svg g[stroke]');
+        if (!g) return null;
+        const stroke = getComputedStyle(g).stroke;
+        const parts = stroke.match(/[\d.]+/g)?.map(Number) ?? [];
+        const bgParts = (getComputedStyle(d.body).backgroundColor.match(/[\d.]+/g) ?? []).map(Number);
+        if (parts.length < 3 || bgParts.length < 3) return { stroke, contrast: null };
+        const alpha = parts.length > 3 ? parts[3] : 1;
+        const lin = (c) => {
+          const s = c / 255;
+          return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+        };
+        const lum = (rgb) => 0.2126 * lin(rgb[0]) + 0.7152 * lin(rgb[1]) + 0.0722 * lin(rgb[2]);
+        const over = [0, 1, 2].map((i) => alpha * parts[i] + (1 - alpha) * bgParts[i]);
+        const a = lum(over);
+        const b = lum(bgParts);
+        const [hi, lo] = a > b ? [a, b] : [b, a];
+        return { stroke, contrast: Number(((hi + 0.05) / (lo + 0.05)).toFixed(2)) };
+      })() : null,
     };
   });
   await page.close();
@@ -61,25 +80,48 @@ for (const theme of ['light', 'dark']) {
   check(`[${theme}] label type stays legible (>= 7.5px)`, m.labelPx !== null && m.labelPx >= 7.5, `${m.labelPx}px at a ${m.frameW}px frame`);
   check(`[${theme}] plate paints the site surface`, theme === 'light' ? m.paper === 'rgb(255, 255, 255)' : m.paper === 'rgb(23, 24, 28)', m.paper);
   check(`[${theme}] plate ink follows the theme`, theme === 'light' ? m.ink === 'rgb(53, 56, 65)' : m.ink === 'rgb(231, 232, 236)', m.ink);
+  check(
+    `[${theme}] swimlanes are re-coloured for the theme and stay visible`,
+    m.lifeline?.stroke === (theme === 'light' ? 'rgba(53, 56, 65, 0.3)' : 'rgba(193, 195, 200, 0.44)')
+      && m.lifeline.contrast >= 1.6,
+    JSON.stringify(m.lifeline),
+  );
   await context.close();
 }
 
 // 2. Theme toggle propagates from the page into the frame.
-// 1c. The embedded plate shows the complete sequence as a figure: every message
-// visible, playback controls left to the standalone animated page.
+// 1c. The embedded plate plays the sequence and keeps its playback controls, so the
+// reader can step and replay without leaving the page.
 {
   const context = await browser.newContext({ viewport: { width: 1920, height: 1100 } });
   const page = await context.newPage();
   await page.goto(DOCS);
-  await page.waitForTimeout(1200);
+  const frame = page.locator('[data-diagram-frame]');
+  await frame.evaluate((f) => {
+    const d = f.contentDocument;
+    const root = d.querySelector('[data-motion-root]');
+    return new Promise((resolve) => {
+      if (root.dataset.frame === 'end') return resolve();
+      const done = () => {
+        if (root.dataset.frame === 'end') {
+          observer.disconnect();
+          resolve();
+        }
+      };
+      const observer = new MutationObserver(done);
+      observer.observe(root, { attributes: true, attributeFilter: ['data-frame'] });
+      setTimeout(() => { observer.disconnect(); resolve(); }, 15000);
+    });
+  });
+  // The final step fades its items in over --motion-step, so let that transition
+  // finish before reading opacity.
+  await page.waitForTimeout(700);
   const m = await page.locator('[data-diagram-frame]').evaluate((f) => {
     const d = f.contentDocument;
     const root = d.querySelector('[data-motion-root]');
     const controls = d.querySelector('[data-motion-controls]');
     const items = [...d.querySelectorAll('[data-motion-item]:not([data-motion-decorative])')];
-    const decorativeHidden = [...d.querySelectorAll('[data-motion-decorative]')].every(
-      (el) => getComputedStyle(el).display === 'none',
-    );
+    const actions = controls ? [...controls.querySelectorAll('[data-motion-action]')].map((b) => b.dataset.motionAction) : [];
     return {
       step: root.dataset.stepCurrent,
       frame: root.dataset.frame,
@@ -87,19 +129,30 @@ for (const theme of ['light', 'dark']) {
       controlsShown: controls ? getComputedStyle(controls).display !== 'none' && !controls.hidden : false,
       faded: items.filter((i) => Number.parseFloat(getComputedStyle(i).opacity) < 1).length,
       items: items.length,
-      decorativeHidden,
       labels: d.querySelectorAll('svg text').length,
+      actions,
+      motionMode: root.dataset.motionMode,
+      decorativeVisible: [...d.querySelectorAll('[data-motion-decorative]')]
+        .filter((el) => getComputedStyle(el).display !== 'none' && Number.parseFloat(getComputedStyle(el).opacity) > 0.01)
+        .length,
     };
   });
   check(
-    'embedded plate shows the complete sequence with no playback chrome',
-    // Six step groups carry the twelve messages; the two decorative overlays are
-    // hidden in a static frame, and the 24 svg text nodes are all present.
-    m.faded === 0 && m.items === 6 && m.labels === 24 && m.decorativeHidden === true && m.controlsShown === false,
+    'embedded plate plays the sequence and settles on the complete frame',
+    m.frame === 'end' && m.step === '6' && m.faded === 0 && m.items === 6 && m.labels === 24 && m.decorativeVisible === 0,
     JSON.stringify(m),
   );
-  const linkHref = await page.locator('.mobile-open, a[href*="wendell-call-sequence.html"]').first().getAttribute('href');
-  check('docs page offers the animated plate as a link', /wendell-call-sequence\.html$/.test(linkHref ?? ''), linkHref ?? 'none');
+  check(
+    'embedded plate exposes its playback controls',
+    m.controlsShown === true && ['play', 'pause', 'prev', 'next', 'replay'].every((a) => m.actions.includes(a)),
+    `controlsShown ${m.controlsShown}, actions ${m.actions.join(', ')}`,
+  );
+  // The controls must be usable from the page, not just painted.
+  const before = await page.locator('[data-diagram-frame]').evaluate((f) => f.contentDocument.querySelector('[data-motion-root]').dataset.stepCurrent);
+  await page.locator('[data-diagram-frame]').evaluate((f) => f.contentDocument.querySelector('[data-motion-action="replay"]').click());
+  await page.waitForTimeout(900);
+  const after = await page.locator('[data-diagram-frame]').evaluate((f) => f.contentDocument.querySelector('[data-motion-root]').dataset.stepCurrent);
+  check('replay works inside the embedded frame', before === '6' && Number(after) < 6, `${before} -> ${after}`);
   await context.close();
 }
 

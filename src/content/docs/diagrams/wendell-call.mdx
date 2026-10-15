@@ -23,27 +23,22 @@ import DiagramPreview from '../../../components/DiagramPreview.astro';
 
 Wendell is the voice assistant behind the Twilio number. This sequence covers one
 inbound call, from the webhook that opens it to the calendar event that closes it.
-Step through the six stages, or replay the whole call.
+The figure plays the six stages as you arrive; its controls step, pause, and replay
+the call, and the keyboard works too — left/right arrows, `Home`/`End`, `Space` to
+play or pause, and `R` to replay.
 
 <DiagramPreview
   src="diagrams/wendell-call-sequence.html"
   title="Wendell phone call sequence"
-  ratio="1120 / 990"
-  maxHeight="1080px"
+  ratio="1120 / 1060"
+  maxHeight="1240px"
   linkBelow={72}
   linkLabel="Open the animated sequence"
-  embedParams="&motion=static"
 />
 
-The figure above is the complete sequence. To watch it build step by step, open the
-animated plate — it plays the six stages with playback controls, and follows your
-system theme on its own.
-
-<LinkCard
-  href={`${import.meta.env.BASE_URL}diagrams/wendell-call-sequence.html`}
-  title="Watch the sequence animate"
-  description="Step through all twelve messages, or replay the whole call. Works without JavaScript and honours reduced motion."
-/>
+Opened on its own the plate follows the operating system theme; embedded here it
+follows this site's theme, including the toggle in the header. A reader with reduced
+motion set, or with JavaScript off, gets the complete figure instead of playback.
 
 ## System overview
 

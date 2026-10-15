@@ -52,7 +52,7 @@
       --color-link: #0e7490;
       --color-rule: rgba(53,56,65,0.14);
       --color-line-strong: rgba(53,56,65,0.32);
-      --color-lifeline: rgba(53,56,65,0.22);
+      --color-lifeline: rgba(53,56,65,0.30);
       --color-node: rgba(255,255,255,0.94);
     }
     [data-theme="dark"] {
@@ -66,7 +66,9 @@
       --color-link: #5bbad5;
       --color-rule: rgba(193,195,200,0.16);
       --color-line-strong: rgba(193,195,200,0.36);
-      --color-lifeline: rgba(193,195,200,0.22);
+      /* Swimlanes must stay legible on the dark surface, so they are raised well
+         above the low-alpha rule colour used for the light theme. */
+      --color-lifeline: rgba(193,195,200,0.44);
       --color-node: rgba(35,38,47,0.96);
     }
     :root {
@@ -122,6 +124,11 @@
     .motion-ready[data-frame="static"] [data-motion-item] {
       opacity: 1;
       transform: none;
+    }
+    /* Decorative overlays exist only while motion is running. Without this the
+       flow token parks at the end of its travel and litters the finished frame. */
+    .motion-ready[data-frame="end"] [data-motion-decorative] {
+      opacity: 0;
     }
     .draw-path {
       fill: none;
@@ -244,7 +251,8 @@
     svg rect[fill="rgba(191,69,32,0.08)"] { fill: var(--color-accent-wash); }
     svg rect[stroke="#2d3142"] { stroke: var(--color-line-strong); }
     svg rect[stroke="#bf4520"] { stroke: var(--color-accent); }
-    svg line[stroke="rgba(45,49,66,0.20)"] { stroke: var(--color-lifeline); }
+    /* The lifelines carry their stroke on the wrapping group, not on each line. */
+    svg g[stroke="rgba(45,49,66,0.20)"] { stroke: var(--color-lifeline); }
     svg path[stroke="#bf4520"] { stroke: var(--color-accent); }
     svg path[stroke="#2e5aa8"] { stroke: var(--color-link); }
     svg path[stroke="#2d3142"] { stroke: var(--color-ink); }
@@ -272,7 +280,7 @@
   </style>
 </head>
 <body>
-  <main data-motion-root data-motion-mode="step" data-step-count="6" data-step-current="6" data-frame="static" data-static-frame="complete">
+  <main data-motion-root data-motion-mode="reveal" data-step-count="6" data-step-current="6" data-frame="static" data-static-frame="complete">
     <p class="eyebrow">Sequence · Inbound call</p>
     <h1>What happens when Wendell answers</h1>
 
