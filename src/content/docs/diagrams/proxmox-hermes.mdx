@@ -1,7 +1,7 @@
 ---
 title: NUC automation and agent architecture
 description: Runtime topology for Proxmox, Home Assistant, and the host-native Hermes services on the home NUC.
-date: 2026-10-13
+date: 2026-10-16
 order: 1
 tags:
   - Proxmox
@@ -24,17 +24,21 @@ import DiagramPreview from '../../../components/DiagramPreview.astro';
 <DiagramPreview
   src="diagrams/proxmox-hermes-architecture.html"
   title="NUC automation and agent architecture"
+  ratio="1280 / 800"
+  maxHeight="800px"
 />
 
 ## System overview
 
-The physical NUC runs Proxmox VE 9.2.2. Home Assistant is isolated in VM 100 with two virtual CPU cores and 4 GB of memory, while Hermes runs directly on the Proxmox host as user-level services.
+The physical NUC runs Proxmox VE 9.2.2. Home Assistant is isolated in VM 100 with two virtual CPU cores and 4 GB of memory, while Hermes runs directly on the Proxmox host as user-level services. The Hermes Agent Runtime is the shared harness that owns the model loop, tools, skills, and memory; the dashboard, gateway, and Wendell phone bridge are ingress surfaces rather than separate agents.
+
+Persistent agent memory is provided by a separate host-native Hindsight service listening on port 8888. Hindsight stores its durable records in a local PostgreSQL instance on port 5432. These services are part of the runtime data path, not an external ingress path.
 
 ## Routes
 
-Local devices access Home Assistant over the home network. Browser sessions enter through the Hermes Dashboard, WhatsApp messages terminate at the Agent Gateway, and phone calls travel through Twilio and ngrok before reaching the Hermes Phone Bridge.
+Local devices access Home Assistant over the home network. Browser sessions enter through the Hermes Dashboard, WhatsApp messages enter through the Agent Gateway, and phone calls travel through Twilio and ngrok before reaching the Wendell Phone Bridge. Each ingress path hands work to the same Hermes Agent Runtime.
 
-The Home Assistant API represents the logical automation path between Home Assistant and Hermes. It is an architectural relationship rather than a captured network trace.
+The Home Assistant API represents the logical automation path from the Hermes Agent Runtime to Home Assistant. It is an architectural relationship rather than a captured network trace.
 
 ## Deployment notes
 

@@ -63,7 +63,10 @@ test.describe('Starlight diagram integration', () => {
 
     const frame = page.frameLocator(FRAME);
     await expect(frame.locator('.node-name', { hasText: 'Home Assistant OS' })).toBeVisible();
-    await expect(frame.locator('.node-name')).toHaveCount(5);
+    await expect(frame.locator('.node-name', { hasText: 'Hermes Agent Runtime' })).toBeVisible();
+    await expect(frame.locator('.node-name', { hasText: 'Hindsight Memory' })).toBeVisible();
+    await expect(frame.locator('.node-name', { hasText: 'PostgreSQL' })).toBeVisible();
+    await expect(frame.locator('.node-name')).toHaveCount(8);
     await expect(frame.locator('.masthead')).toBeHidden();
     await expect(frame.locator('svg')).toBeVisible();
   });

@@ -77,10 +77,33 @@ test('the diagram rounds service boxes and has no decorative edge rails', async 
   assert.doesNotMatch(diagram, /width="5" height="\d+"\/>/);
 
   const nodeRects = diagram.match(/<rect class="node(-primary|-network)?"[^>]*>/g) ?? [];
-  assert.equal(nodeRects.length, 5);
+  assert.equal(nodeRects.length, 8);
   for (const rect of nodeRects) {
     assert.match(rect, /rx="8"/);
   }
+});
+
+test('the architecture separates ingress services from the Hermes agent runtime', async () => {
+  const diagram = await readBuiltPage('diagrams/proxmox-hermes-architecture.html');
+
+  assert.match(diagram, />Hermes Agent Runtime</);
+  assert.match(diagram, />model loop · tools · skills · memory</);
+  assert.match(diagram, />Hermes Agent Gateway</);
+  assert.match(diagram, />Wendell Phone Bridge</);
+  assert.match(diagram, />RUNTIME</);
+  assert.match(diagram, /<dt>Hermes gateway<\/dt><dd>WhatsApp · routing · sessions<\/dd>/);
+  assert.match(diagram, />Home Assistant API call</);
+  assert.match(diagram, />local and service connections</);
+});
+
+test('the architecture shows the local Hindsight service and PostgreSQL store', async () => {
+  const diagram = await readBuiltPage('diagrams/proxmox-hermes-architecture.html');
+
+  assert.match(diagram, />Hindsight Memory</);
+  assert.match(diagram, />local API\/MCP · port 8888</);
+  assert.match(diagram, />PostgreSQL</);
+  assert.match(diagram, />local database · port 5432</);
+  assert.match(diagram, />MEMORY API</);
 });
 
 test('the standalone diagram scales to its container instead of clipping', async () => {

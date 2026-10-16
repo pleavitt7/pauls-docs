@@ -432,6 +432,7 @@
     .node-type-accent { fill: var(--accent); }
     .node-type-blue { fill: var(--blue); }
     .node-name { fill: var(--ink); font-family: var(--sans); font-size: 16px; font-weight: 600; }
+    .node-name-tight { font-size: 14px; }
     .node-detail { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     .metric-label { fill: var(--quiet); font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; }
     .metric-value { fill: var(--ink); font-family: var(--mono); font-size: 11px; font-weight: 600; }
@@ -586,11 +587,11 @@
           <div class="masthead-kicker">
             <span>System plate 01</span>
             <span>Home infrastructure</span>
-            <span>Observed 13 Oct 2026</span>
+            <span>Observed 16 Oct 2026</span>
           </div>
           <h1>NUC automation and agent architecture</h1>
         </div>
-        <p class="standfirst">A single physical host carries two operating models: Home Assistant is isolated inside a virtual machine, while Hermes runs as a set of host-native services with separate web, messaging, and voice ingress.</p>
+        <p class="standfirst">A single physical host carries two operating models: Home Assistant is isolated inside a virtual machine, while host-native Hermes ingress services converge on the Agent Runtime, which persists memory through a local Hindsight service and PostgreSQL database.</p>
       </header>
 
       <div class="content-grid">
@@ -601,7 +602,9 @@
               <li class="index-item"><span class="index-number">01</span><p class="index-name">Physical NUC</p><p class="index-detail">host: nuc</p></li>
               <li class="index-item"><span class="index-number">02</span><p class="index-name">Proxmox VE</p><p class="index-detail">9.2.2 · kernel 7.0.2-6-pve</p></li>
               <li class="index-item"><span class="index-number">03</span><p class="index-name">Home Assistant</p><p class="index-detail">VM 100 · QEMU/KVM</p></li>
-              <li class="index-item"><span class="index-number">04</span><p class="index-name">Hermes services</p><p class="index-detail">host-native · systemd user</p></li>
+              <li class="index-item"><span class="index-number">04</span><p class="index-name">Hermes ingress</p><p class="index-detail">dashboard · gateway · phone</p></li>
+              <li class="index-item"><span class="index-number">05</span><p class="index-name">Agent runtime</p><p class="index-detail">model loop · tools · memory</p></li>
+              <li class="index-item"><span class="index-number">06</span><p class="index-name">Memory services</p><p class="index-detail">Hindsight · PostgreSQL</p></li>
             </ol>
           </section>
 
@@ -609,8 +612,9 @@
             <h2 class="index-heading">Observed</h2>
             <dl class="facts">
               <div class="facts-row"><dt>Home Assistant</dt><dd>2 vCPU · 4 GB RAM · VirtIO</dd></div>
-              <div class="facts-row"><dt>Hermes gateway</dt><dd>connected · queue 0</dd></div>
-              <div class="facts-row"><dt>Ingress</dt><dd>browser · WhatsApp · Twilio</dd></div>
+              <div class="facts-row"><dt>Hermes gateway</dt><dd>WhatsApp · routing · sessions</dd></div>
+              <div class="facts-row"><dt>Agent runtime</dt><dd>model loop · tools · skills · memory</dd></div>
+              <div class="facts-row"><dt>Memory</dt><dd>Hindsight :8888 · PostgreSQL :5432</dd></div>
               <div class="facts-row"><dt>Phone path</dt><dd>Twilio → ngrok → bridge</dd></div>
             </dl>
           </section>
@@ -618,10 +622,10 @@
           <section class="index-section">
             <h2 class="index-heading">Line key</h2>
             <ul class="legend">
-              <li><span class="legend-line accent"></span><span>automation and messaging</span></li>
+              <li><span class="legend-line accent"></span><span>Home Assistant API call</span></li>
               <li><span class="legend-line blue"></span><span>external voice ingress</span></li>
-              <li><span class="legend-line"></span><span>local web session</span></li>
-              <li><span class="legend-line dashed"></span><span>logical agent call</span></li>
+              <li><span class="legend-line"></span><span>local and service connections</span></li>
+              <li><span class="legend-line dashed"></span><span>runtime and memory handoff</span></li>
             </ul>
           </section>
         </aside>
@@ -629,7 +633,7 @@
         <figure>
           <div class="figure-header">
             <p class="figure-title">Runtime topology</p>
-            <p class="figure-meta">Physical → virtualisation → services</p>
+            <p class="figure-meta">Physical → virtualisation → ingress → runtime → data</p>
           </div>
 
 
@@ -647,30 +651,35 @@
               <li class="mobile-route">
                 <div class="mobile-source"><strong>Browser</strong><span>web session</span></div>
                 <span class="mobile-arrow" aria-hidden="true">→</span>
-                <div class="mobile-target"><strong>Hermes Dashboard</strong><span>host-native service</span></div>
+                <div class="mobile-target"><strong>Dashboard → Agent Runtime</strong><span>web ingress · shared harness</span></div>
               </li>
               <li class="mobile-route">
                 <div class="mobile-source"><strong>WhatsApp</strong><span>family messages</span></div>
                 <span class="mobile-arrow" aria-hidden="true">→</span>
-                <div class="mobile-target accent"><strong>Agent Gateway</strong><span>bot-mode bridge</span></div>
+                <div class="mobile-target"><strong>Gateway → Agent Runtime</strong><span>routing · sessions · bot mode</span></div>
               </li>
               <li class="mobile-route mobile-route-chain">
                 <div class="mobile-chain">
-                  <strong>Twilio</strong><span class="blue">→</span><strong>ngrok</strong><span class="blue">→</span><strong>Phone Bridge</strong><span>→</span><strong>Agent Gateway</strong>
+                  <strong>Twilio</strong><span class="blue">→</span><strong>ngrok</strong><span class="blue">→</span><strong>Wendell Phone Bridge</strong><span>→</span><strong>Agent Runtime</strong>
                 </div>
               </li>
               <li class="mobile-route">
-                <div class="mobile-source"><strong>Home Assistant API</strong><span>automation tools</span></div>
+                <div class="mobile-source"><strong>Hermes Agent Runtime</strong><span>automation tools</span></div>
                 <span class="mobile-arrow" aria-hidden="true">→</span>
-                <div class="mobile-target"><strong>Hermes services</strong><span>logical integration</span></div>
+                <div class="mobile-target accent"><strong>Home Assistant API</strong><span>logical integration</span></div>
+              </li>
+              <li class="mobile-route mobile-route-chain">
+                <div class="mobile-chain">
+                  <strong>Agent Runtime</strong><span>→</span><strong>Hindsight Memory</strong><span>→</span><strong>PostgreSQL</strong>
+                </div>
               </li>
             </ol>
           </div>
 
           <div class="diagram-scroll">
-            <svg viewBox="0 0 1280 700" role="img" aria-labelledby="system-plate-title system-plate-desc">
+            <svg viewBox="0 0 1280 800" role="img" aria-labelledby="system-plate-title system-plate-desc">
               <title id="system-plate-title">NUC infrastructure runtime topology</title>
-              <desc id="system-plate-desc">Home network access, Twilio, a browser, and WhatsApp connect to a physical NUC. Proxmox runs Home Assistant in virtual machine 100 while Hermes dashboard, gateway, ngrok tunnel, and phone bridge run directly on the host.</desc>
+              <desc id="system-plate-desc">Home network access reaches Home Assistant in virtual machine 100. Browser, WhatsApp, and Twilio voice ingress converge on one Hermes Agent Runtime, which calls the Home Assistant API and persists memory through a local Hindsight service backed by PostgreSQL.</desc>
               <defs>
                 <marker id="arrow-muted" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path class="marker-muted" d="M0,0 L8,4 L0,8 Z"/></marker>
                 <marker id="arrow-accent" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path class="marker-accent" d="M0,0 L8,4 L0,8 Z"/></marker>
@@ -697,104 +706,131 @@
               <text class="interface-detail" x="930" y="82">family bot messages</text>
               <line class="interface-rule" x1="930" y1="96" x2="1122" y2="96"/>
 
-              <rect class="boundary" x="40" y="134" width="1200" height="492"/>
+              <rect class="boundary" x="40" y="134" width="1200" height="606"/>
               <line class="corner-tick" x1="40" y1="134" x2="64" y2="134"/>
               <line class="corner-tick" x1="40" y1="134" x2="40" y2="158"/>
               <line class="corner-tick" x1="1216" y1="134" x2="1240" y2="134"/>
               <line class="corner-tick" x1="1240" y1="134" x2="1240" y2="158"/>
               <text class="boundary-label" x="64" y="158">PHYSICAL HOST / NUC</text>
 
-              <rect class="boundary-inner" x="76" y="180" width="1128" height="376"/>
+              <rect class="boundary-inner" x="76" y="180" width="1128" height="500"/>
               <text class="boundary-label" x="100" y="204">PROXMOX VE 9.2.2 / KERNEL 7.0.2-6-PVE</text>
 
               <text class="section-number" x="112" y="266">03</text>
               <text class="boundary-label" x="112" y="286">VIRTUAL MACHINE / VM 100</text>
-              <line class="group-rule" x1="112" y1="300" x2="468" y2="300"/>
+              <line class="group-rule" x1="112" y1="300" x2="432" y2="300"/>
 
-              <text class="section-number" x="526" y="266">04</text>
-              <text class="boundary-label" x="526" y="286">HOST-NATIVE HERMES SERVICES</text>
-              <line class="group-rule" x1="526" y1="300" x2="1160" y2="300"/>
+              <text class="section-number" x="500" y="266">04</text>
+              <text class="boundary-label" x="500" y="286">HOST-NATIVE HERMES INGRESS + RUNTIME + DATA</text>
+              <line class="group-rule" x1="500" y1="300" x2="1168" y2="300"/>
 
-              <path class="connector" d="M184,96 V330"/>
+              <path class="connector" d="M184,96 V320"/>
               <rect class="label-mask" x="196" y="204" width="44" height="16"/>
               <text class="connector-label" x="218" y="215">LOCAL</text>
 
-              <path class="connector-blue" d="M466,96 V480 H548"/>
+              <path class="connector-blue" d="M466,96 V548 H1070 V520"/>
               <rect class="label-mask" x="478" y="210" width="46" height="16"/>
               <text class="connector-label connector-label-blue" x="501" y="221">VOICE</text>
 
-              <path class="connector" d="M736,96 V330"/>
+              <path class="connector" d="M736,96 V280 Q736,288 728,288 H608 Q600,288 600,296 V320"/>
               <rect class="label-mask" x="748" y="204" width="50" height="16"/>
               <text class="connector-label" x="773" y="215">WEB UI</text>
 
-              <path class="connector-accent" d="M1018,96 V330"/>
+              <path class="connector" d="M1018,96 V280 Q1018,288 1010,288 H844 Q836,288 836,296 V320"/>
               <rect class="label-mask" x="1030" y="204" width="70" height="16"/>
-              <text class="connector-label connector-label-accent" x="1065" y="215">MESSAGES</text>
+              <text class="connector-label" x="1065" y="215">MESSAGES</text>
 
-              <path class="connector-accent" d="M444,382 H548"/>
-              <rect class="label-mask" x="468" y="366" width="48" height="16"/>
-              <text class="connector-label connector-label-accent" x="492" y="377">HA API</text>
+              <path class="connector-dashed" d="M600,396 V408 Q600,416 608,416 H672 Q680,416 680,424 V444"/>
+              <rect class="label-mask" x="616" y="398" width="48" height="14"/>
+              <text class="connector-label" x="640" y="408">RUNTIME</text>
 
-              <path class="connector" d="M802,374 H872"/>
-              <rect class="label-mask" x="813" y="358" width="48" height="16"/>
-              <text class="connector-label" x="837" y="369">SESSION</text>
+              <path class="connector-dashed" d="M836,396 V444"/>
+              <rect class="label-mask" x="848" y="406" width="48" height="14"/>
+              <text class="connector-label" x="872" y="416">RUNTIME</text>
 
-              <path class="connector-blue" d="M802,480 H872"/>
-              <rect class="label-mask" x="815" y="464" width="44" height="16"/>
-              <text class="connector-label connector-label-blue" x="837" y="475">HTTPS</text>
+              <path class="connector-blue" d="M1070,444 V396"/>
+              <rect class="label-mask" x="1082" y="410" width="44" height="14"/>
+              <text class="connector-label connector-label-blue" x="1104" y="420">HTTPS</text>
 
-              <path class="connector-dashed" d="M1002,436 V414"/>
-              <rect class="label-mask" x="1014" y="416" width="68" height="16"/>
-              <text class="connector-label" x="1048" y="427">AGENT CALL</text>
+              <path class="connector-dashed" d="M972,358 H952 Q944,358 944,366 V480 Q944,488 936,488"/>
+              <rect class="label-mask" x="954" y="414" width="68" height="14"/>
+              <text class="connector-label" x="988" y="424">AGENT CALL</text>
 
-              <rect class="node-primary" x="136" y="330" width="308" height="132" rx="8"/>
-              <text class="node-type node-type-accent" x="160" y="354">AUTOMATION CORE</text>
-              <text class="node-name" x="160" y="383">Home Assistant OS</text>
-              <text class="node-detail" x="160" y="405">QEMU/KVM guest · local API</text>
-              <text class="node-detail" x="160" y="424">devices · scenes · automations</text>
+              <path class="connector-accent" d="M616,488 H568 Q560,488 560,480 V396 Q560,388 552,388 H432"/>
+              <rect class="label-mask" x="500" y="430" width="48" height="14"/>
+              <text class="connector-label connector-label-accent" x="524" y="440">HA API</text>
 
-              <text class="metric-label" x="136" y="494">VCPU</text>
-              <text class="metric-value" x="136" y="512">2 cores</text>
-              <text class="metric-label" x="246" y="494">MEMORY</text>
-              <text class="metric-value" x="246" y="512">4 GB</text>
-              <text class="metric-label" x="356" y="494">NETWORK</text>
-              <text class="metric-value" x="356" y="512">VirtIO</text>
+              <path class="connector-dashed" d="M776,536 V572"/>
+              <rect class="label-mask" x="790" y="544" width="68" height="14"/>
+              <text class="connector-label" x="824" y="554">MEMORY API</text>
 
-              <rect class="node" x="548" y="330" width="254" height="88" rx="8"/>
-              <text class="node-type" x="572" y="353">WEB SURFACE</text>
-              <text class="node-name" x="572" y="380">Hermes Dashboard</text>
-              <text class="node-detail" x="572" y="400">systemd user service</text>
+              <path class="connector" d="M886,610 H936"/>
+              <rect class="label-mask" x="897" y="592" width="28" height="14"/>
+              <text class="connector-label" x="911" y="602">SQL</text>
 
-              <rect class="node-primary" x="872" y="330" width="254" height="88" rx="8"/>
-              <text class="node-type node-type-accent" x="896" y="353">MESSAGING GATEWAY</text>
-              <text class="node-name" x="896" y="380">Hermes Agent Gateway</text>
-              <text class="node-detail" x="896" y="400">WhatsApp bridge · bot mode</text>
+              <rect class="node-primary" x="112" y="320" width="320" height="132" rx="8"/>
+              <text class="node-type node-type-accent" x="136" y="344">AUTOMATION CORE</text>
+              <text class="node-name" x="136" y="373">Home Assistant OS</text>
+              <text class="node-detail" x="136" y="395">QEMU/KVM guest · local API</text>
+              <text class="node-detail" x="136" y="414">devices · scenes · automations</text>
 
-              <rect class="node-network" x="548" y="436" width="254" height="88" rx="8"/>
-              <text class="node-type node-type-blue" x="572" y="459">PUBLIC INGRESS</text>
-              <text class="node-name" x="572" y="486">ngrok Tunnel</text>
-              <text class="node-detail" x="572" y="506">Twilio webhook ingress</text>
+              <text class="metric-label" x="112" y="486">VCPU</text>
+              <text class="metric-value" x="112" y="504">2 cores</text>
+              <text class="metric-label" x="224" y="486">MEMORY</text>
+              <text class="metric-value" x="224" y="504">4 GB</text>
+              <text class="metric-label" x="336" y="486">NETWORK</text>
+              <text class="metric-value" x="336" y="504">VirtIO</text>
 
-              <rect class="node" x="872" y="436" width="254" height="88" rx="8"/>
-              <text class="node-type" x="896" y="459">VOICE SERVICE</text>
-              <text class="node-name" x="896" y="486">Hermes Phone Bridge</text>
-              <text class="node-detail" x="896" y="506">Twilio · Node.js</text>
+              <rect class="node" x="500" y="320" width="200" height="76" rx="8"/>
+              <text class="node-type" x="520" y="342">WEB INGRESS</text>
+              <text class="node-name" x="520" y="369">Hermes Dashboard</text>
+              <text class="node-detail" x="520" y="387">browser surface</text>
 
-              <line class="status-rule" x1="76" y1="582" x2="1204" y2="582"/>
-              <text class="status-label" x="76" y="606">HOSTNAME</text>
-              <text class="status-value" x="150" y="606">nuc</text>
-              <text class="status-label" x="300" y="606">HERMES GATEWAY</text>
-              <text class="status-value" x="424" y="606">connected</text>
-              <text class="status-label" x="610" y="606">QUEUE</text>
-              <text class="status-value" x="662" y="606">0</text>
-              <text class="status-label" x="820" y="606">SERVICE MODEL</text>
-              <text class="status-value" x="938" y="606">VM + host-native</text>
+              <rect class="node" x="736" y="320" width="200" height="76" rx="8"/>
+              <text class="node-type" x="756" y="342">MESSAGE INGRESS</text>
+              <text class="node-name node-name-tight" x="756" y="369">Hermes Agent Gateway</text>
+              <text class="node-detail" x="756" y="387">routing · sessions · platforms</text>
+
+              <rect class="node" x="972" y="320" width="196" height="76" rx="8"/>
+              <text class="node-type" x="992" y="342">VOICE INGRESS</text>
+              <text class="node-name node-name-tight" x="992" y="369">Wendell Phone Bridge</text>
+              <text class="node-detail" x="992" y="387">Twilio · Node.js</text>
+
+              <rect class="node-primary" x="616" y="444" width="320" height="92" rx="8"/>
+              <text class="node-type node-type-accent" x="640" y="468">AGENT HARNESS</text>
+              <text class="node-name" x="640" y="497">Hermes Agent Runtime</text>
+              <text class="node-detail" x="640" y="519">model loop · tools · skills · memory</text>
+
+              <rect class="node-network" x="972" y="444" width="196" height="76" rx="8"/>
+              <text class="node-type node-type-blue" x="992" y="466">PUBLIC INGRESS</text>
+              <text class="node-name" x="992" y="493">ngrok Tunnel</text>
+              <text class="node-detail" x="992" y="511">Twilio webhook ingress</text>
+
+              <rect class="node" x="666" y="572" width="220" height="76" rx="8"/>
+              <text class="node-type" x="686" y="594">MEMORY SERVICE</text>
+              <text class="node-name" x="686" y="621">Hindsight Memory</text>
+              <text class="node-detail" x="686" y="639">local API/MCP · port 8888</text>
+
+              <rect class="node" x="936" y="572" width="220" height="76" rx="8"/>
+              <text class="node-type" x="956" y="594">DURABLE STORE</text>
+              <text class="node-name" x="956" y="621">PostgreSQL</text>
+              <text class="node-detail" x="956" y="639">local database · port 5432</text>
+
+              <line class="status-rule" x1="76" y1="704" x2="1204" y2="704"/>
+              <text class="status-label" x="76" y="728">HOSTNAME</text>
+              <text class="status-value" x="150" y="728">nuc</text>
+              <text class="status-label" x="300" y="728">HERMES GATEWAY</text>
+              <text class="status-value" x="424" y="728">connected</text>
+              <text class="status-label" x="610" y="728">MEMORY BANK</text>
+              <text class="status-value" x="704" y="728">hermes</text>
+              <text class="status-label" x="820" y="728">SERVICE MODEL</text>
+              <text class="status-value" x="938" y="728">VM + host-native</text>
             </svg>
           </div>
 
           <figcaption>
-            <p><strong>Reading order:</strong> external interfaces enter from the top; the physical NUC and Proxmox boundaries contain the two runtime groups; arrows terminate at the exact service receiving each request.</p>
-            <p><strong>Scope:</strong> host and service details were read from the live NUC. The Home Assistant API and agent-call lines describe the logical integration, not a captured network trace.</p>
+            <p><strong>Reading order:</strong> external interfaces enter from the top; ingress services hand work to the Agent Runtime, which calls Home Assistant and sends memory operations to Hindsight; Hindsight persists them in PostgreSQL.</p>
+            <p><strong>Scope:</strong> host, service, and local datastore details were refreshed from the live NUC on 16 October 2026. Runtime, memory, and Home Assistant lines describe logical integration, not a captured network trace.</p>
           </figcaption>
         </figure>
       </div>
