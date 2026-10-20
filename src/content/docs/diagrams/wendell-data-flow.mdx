@@ -1,6 +1,6 @@
 ---
 title: Wendell data flow and trust boundaries
-description: How calls, model traffic, general questions, address validation, and confirmed Calendar writes move through Wendell.
+description: How calls, model traffic, general questions, caller memory, address validation, and confirmed Calendar writes move through Wendell.
 date: 2026-10-20
 order: 3
 tags:
@@ -20,10 +20,10 @@ head:
 import { LinkCard } from '@astrojs/starlight/components';
 import DiagramPreview from '../../../components/DiagramPreview.astro';
 
-This view separates Wendell's public call path from its two constrained work paths:
-voice conversation and general reasoning, and appointment booking. The phone bridge
-is the only service exposed through ngrok; neither Hermes nor Calendar has a public
-route.
+This view separates Wendell's public call path from its three constrained work paths:
+voice conversation and general reasoning, appointment booking, and caller memory. The
+phone bridge is the only service exposed through ngrok; neither Hermes nor Calendar
+has a public route.
 
 <DiagramPreview
   src="diagrams/wendell-data-flow.html"
@@ -49,6 +49,19 @@ a caller asks a general question, the bridge delegates it to the isolated
 `wendell` Hermes API route. That profile has API toolsets disabled, memory disabled,
 and no route to Paul's default Hermes profile.
 
+## Caller memory
+
+Caller continuity is a third path out of the bridge, separate from both the voice
+model and the reasoning profile. After the allowlist check the bridge recalls from a
+Hindsight bank keyed to the trusted Twilio `From` number, and it can write back only
+through the same scoped bank. GPT-Live never sees that bank, and the `wendell` profile
+still has memory off.
+
+A save needs the caller to say something explicit, then a second explicit
+confirmation: the bridge reads the proposed value back and stores it only after the
+caller agrees. PINs, passwords, tokens, verification codes, card details, and call
+transcripts are refused.
+
 ## Appointment booking
 
 Booking dialogue uses a separate narrow backend inside the bridge. The backend uses
@@ -60,9 +73,14 @@ in a later utterance.
 ## Trust boundaries
 
 The public edge terminates at the bridge. Twilio and ngrok cannot directly call the
-Hermes profile, Nominatim, or Google Calendar. PIN digits are consumed locally, and
-the trusted callback number comes from Twilio metadata rather than from spoken
-input.
+Hermes profile, Nominatim, Google Calendar, or the caller memory service. PIN digits
+are consumed locally, and the trusted callback number comes from Twilio metadata
+rather than from spoken input.
+
+Caller memory is scoped by that same trusted `From` value: the bridge derives an
+opaque bank name, recalls only that bank, and requires the caller's separate spoken
+confirmation before writing. Nothing in the bank is exposed to the voice model or
+the `wendell` Hermes profile.
 
 <LinkCard
   href="../wendell-call/"

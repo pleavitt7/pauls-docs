@@ -1,7 +1,7 @@
 ---
 title: NUC automation and agent architecture
 description: Runtime topology for Proxmox, Home Assistant, and the host-native Hermes services on the home NUC.
-date: 2026-10-16
+date: 2026-10-20
 order: 1
 tags:
   - Proxmox
@@ -34,9 +34,15 @@ The physical NUC runs Proxmox VE 9.2.2. Home Assistant is isolated in VM 100 wit
 
 Persistent agent memory is provided by a separate host-native Hindsight service listening on port 8888. Hindsight stores its durable records in a local PostgreSQL instance on port 5432. These services are part of the runtime data path, not an external ingress path.
 
+## Caller memory
+
+The Wendell Phone Bridge does not use the Agent Runtime's memory. It reaches the same loopback Hindsight service on its own path and keeps one bank per trusted Twilio caller number, named from a SHA-256 digest rather than the number itself. The `wendell` Hermes profile therefore stays with memory injection and its API memory tool disabled: caller memory is not profile memory, so a caller's saved preference cannot surface in a Hermes session that is not serving that caller, and one caller's record cannot be recalled from another caller's call.
+
+Recall is limited to the calling number's bank. Saving is limited to a preferred name, name pronunciation, an approved address, a communication or accessibility preference, and a usual type of work, and requires a separate spoken confirmation after the bridge reads the proposed value back. PINs, passwords, tokens, verification codes, card details, and call transcripts are refused.
+
 ## Routes
 
-Local devices access Home Assistant over the home network. Browser sessions enter through the Hermes Dashboard, WhatsApp messages enter through the Agent Gateway, and phone calls travel through Twilio and ngrok before reaching the Wendell Phone Bridge. Each ingress path hands work to the same Hermes Agent Runtime.
+Local devices access Home Assistant over the home network. Browser sessions enter through the Hermes Dashboard, WhatsApp messages enter through the Agent Gateway, and phone calls travel through Twilio and ngrok before reaching the Wendell Phone Bridge. The browser, messaging, and phone ingress paths hand their reasoning work to the same Hermes Agent Runtime; the bridge's caller memory is the one path that leaves it for Hindsight directly.
 
 The Home Assistant API represents the logical automation path from the Hermes Agent Runtime to Home Assistant. It is an architectural relationship rather than a captured network trace.
 

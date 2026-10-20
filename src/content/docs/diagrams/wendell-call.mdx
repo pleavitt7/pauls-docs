@@ -1,7 +1,7 @@
 ---
 title: Phone call sequence
 description: An animated sequence diagram of an inbound call to Wendell, from the Twilio webhook through the live voice model to the calendar write.
-date: 2026-10-16
+date: 2026-10-20
 order: 2
 tags:
   - Twilio
@@ -53,6 +53,14 @@ checks the caller against the allowlist, then answers with media-stream TwiML th
 carries the caller number and call SID, and Twilio opens the media websocket. Audio
 streams to the live voice model in both directions while the bridge records the
 call.
+
+## Caller memory
+
+Once the caller is on the allowlist, the bridge derives a bank name from the trusted
+`From` number and recalls only that bank from the local Hindsight service. The bank
+never reaches GPT-Live and is not the `wendell` profile's memory, which stays off. A
+save needs a second explicit confirmation from the caller, and secrets and
+transcripts are refused.
 
 ## Booking
 

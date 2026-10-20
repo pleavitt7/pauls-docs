@@ -122,15 +122,15 @@
     <header class="masthead">
       <div>
         <p class="kicker">Wendell · data flow · trust boundaries</p>
-        <h1>One exposed bridge, two constrained work paths</h1>
+        <h1>One exposed bridge, three constrained work paths</h1>
       </div>
-      <p class="standfirst">Twilio and ngrok terminate at the Wendell phone bridge. Voice conversation and general questions stay isolated from the narrow booking path that validates addresses and reads or writes Calendar only after confirmation.</p>
+      <p class="standfirst">Twilio and ngrok terminate at the Wendell phone bridge. Voice conversation and general questions stay isolated from the narrow booking path that validates addresses and reads or writes Calendar only after confirmation. Caller continuity is a third path: the bridge keeps one Hindsight bank per trusted caller number, and stores a preference only after a second, separate spoken confirmation — never a PIN, card, code, token, or call transcript.</p>
     </header>
 
     <div class="diagram-scroll">
       <svg viewBox="0 0 1280 780" role="img" aria-labelledby="wendell-data-flow-title wendell-data-flow-desc">
         <title id="wendell-data-flow-title">Wendell data flow and trust boundaries</title>
-        <desc id="wendell-data-flow-desc">An architecture diagram showing calls entering through Twilio and ngrok, the Wendell bridge exchanging audio with OpenAI, general questions routed to an isolated Hermes profile, and booking work using Nominatim and Google Calendar.</desc>
+        <desc id="wendell-data-flow-desc">An architecture diagram showing calls entering through Twilio and ngrok, the Wendell bridge exchanging audio with OpenAI, general questions routed to an isolated Hermes profile, booking work using Nominatim and Google Calendar, and caller continuity stored in a separate per-caller Hindsight bank on loopback.</desc>
         <defs>
           <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted)"/>
@@ -175,17 +175,23 @@
         <rect class="label-mask" x="818" y="256" width="84" height="18" rx="2"/>
         <text class="arrow-label link" x="860" y="268">AUDIO + AI</text>
 
-        <line class="connector" x1="566" y1="354" x2="566" y2="432" marker-end="url(#arrow)"/>
+        <path class="connector" d="M 566 354 V 432" marker-end="url(#arrow)"/>
         <rect class="label-mask" x="519" y="384" width="94" height="18" rx="2"/>
         <text class="arrow-label" x="566" y="396">GENERAL Q&amp;A</text>
 
+        <!-- Caller continuity stays inside the bridge's own scoped path: the
+             profile has memory off, so the bridge talks to Hindsight directly. -->
+        <path class="connector" d="M 700 354 V 382 Q 700 390 708 390 H 802 Q 810 390 810 398 V 596 Q 810 604 802 604 H 792" marker-end="url(#arrow)"/>
+        <rect class="label-mask" x="707" y="366" width="96" height="18" rx="2"/>
+        <text class="arrow-label" x="755" y="378">CALLER MEMORY</text>
+
         <path class="connector-link" d="M 792 318 H 850 Q 858 318 858 326 V 374 Q 858 382 866 382 H 928" marker-end="url(#arrow-link)"/>
-        <rect class="label-mask" x="815" y="345" width="86" height="18" rx="2"/>
+        <rect class="label-mask" x="822" y="345" width="72" height="18" rx="2"/>
         <text class="arrow-label link" x="858" y="357">ADDRESS</text>
 
         <path class="connector-link" d="M 792 330 H 830 Q 838 330 838 338 V 544 Q 838 552 846 552 H 928" marker-end="url(#arrow-link)"/>
-        <rect class="label-mask" x="797" y="430" width="82" height="18" rx="2"/>
-        <text class="arrow-label link" x="838" y="442">CALENDAR</text>
+        <rect class="label-mask" x="846" y="558" width="68" height="18" rx="2"/>
+        <text class="arrow-label link" x="880" y="570">CALENDAR</text>
 
         <!-- Forbidden public bypass: it visibly stops at the private boundary. -->
         <line class="blocked" x1="292" y1="582" x2="354" y2="582"/>
@@ -206,7 +212,7 @@
         <rect class="tag" x="88" y="302" width="72" height="20" rx="2"/>
         <text class="tag-text" x="124" y="316" text-anchor="middle">TELEPHONY</text>
         <text class="node-name" x="88" y="346">Twilio</text>
-        <text class="node-detail" x="88" y="366">Australian number · Media Streams</text>
+        <text class="node-detail" x="88" y="366">AU number · Media Streams</text>
         <text class="node-note" x="88" y="382">trusted From + CallSid metadata</text>
 
         <rect class="node" x="72" y="460" width="220" height="100" rx="8"/>
@@ -221,14 +227,20 @@
         <text class="node-name" x="444" y="270">Wendell Phone Bridge</text>
         <text class="node-detail" x="444" y="294">Node service · caller allowlist · per-call state</text>
         <line class="divider" x1="444" y1="310" x2="772" y2="310"/>
-        <text class="node-note" x="444" y="330">booking tools · profile-local recordings · confirmation gate</text>
+        <text class="node-note" x="444" y="330">booking tools · recordings · confirmation gate</text>
 
         <rect class="node" x="424" y="432" width="368" height="112" rx="8"/>
         <rect class="tag" x="444" y="448" width="96" height="20" rx="2"/>
         <text class="tag-text" x="492" y="462" text-anchor="middle">ISOLATED API</text>
         <text class="node-name" x="444" y="494">Hermes · wendell profile</text>
         <text class="node-detail" x="444" y="516">/p/wendell · API toolsets disabled · memory off</text>
-        <text class="node-note" x="444" y="534">general reasoning only; no route to Paul's default profile</text>
+        <text class="node-note" x="444" y="534">reasoning only · no route to Paul's profile</text>
+
+        <rect class="node" x="424" y="560" width="368" height="82" rx="8"/>
+        <rect class="tag" x="444" y="574" width="68" height="20" rx="2"/>
+        <text class="tag-text" x="478" y="588" text-anchor="middle">MEMORY</text>
+        <text class="node-name" x="444" y="614">Hindsight Caller Memory</text>
+        <text class="node-detail" x="444" y="634">one bank per trusted From · consent gate</text>
 
         <rect class="node-external" x="928" y="116" width="264" height="184" rx="8"/>
         <rect class="tag-link" x="948" y="136" width="82" height="22" rx="2"/>
@@ -237,7 +249,7 @@
         <text class="node-detail" x="948" y="216">GPT-Live · speech + transcription</text>
         <line class="divider" x1="948" y1="232" x2="1172" y2="232"/>
         <text class="node-detail" x="948" y="254">Responses API · booking dialogue</text>
-        <text class="node-note" x="948" y="276">receives no PIN digits or callback digits</text>
+        <text class="node-note" x="948" y="276">no PIN digits or callback digits</text>
 
         <rect class="node-external" x="928" y="338" width="264" height="88" rx="8"/>
         <rect class="tag-link" x="948" y="354" width="76" height="20" rx="2"/>
@@ -250,20 +262,22 @@
         <text class="tag-text inverse" x="992" y="530" text-anchor="middle">GOOGLE API</text>
         <text class="node-name" x="948" y="562">Google Calendar</text>
         <text class="node-detail" x="948" y="584">free/busy read · event write</text>
-        <text class="node-note" x="948" y="602">write only after explicit later confirmation</text>
+        <text class="node-note" x="948" y="602">write only after explicit confirmation</text>
 
         <!-- Bottom legend strip -->
         <line x1="44" y1="688" x2="1236" y2="688" stroke="var(--rule-strong)"/>
         <line class="connector-accent legend-rule" x1="64" y1="724" x2="116" y2="724" marker-end="url(#arrow-accent)"/>
         <text class="legend-text" x="132" y="728">primary call path</text>
-        <line class="connector-link legend-rule" x1="318" y1="724" x2="370" y2="724" marker-end="url(#arrow-link)"/>
-        <text class="legend-text" x="386" y="728">external API exchange</text>
-        <line class="blocked" x1="610" y1="724" x2="654" y2="724"/>
-        <circle class="stop" cx="666" cy="724" r="10"/>
-        <line class="stop-mark" x1="662" y1="720" x2="670" y2="728"/>
-        <line class="stop-mark" x1="670" y1="720" x2="662" y2="728"/>
-        <text class="legend-text" x="686" y="728">blocked public bypass</text>
-        <text class="caption" x="1220" y="730" text-anchor="end">The bridge is the only public ingress.</text>
+        <line class="connector-link legend-rule" x1="300" y1="724" x2="352" y2="724" marker-end="url(#arrow-link)"/>
+        <text class="legend-text" x="368" y="728">external API exchange</text>
+        <line class="connector legend-rule" x1="540" y1="724" x2="584" y2="724" marker-end="url(#arrow)"/>
+        <text class="legend-text" x="600" y="728">local service call</text>
+        <line class="blocked" x1="760" y1="724" x2="804" y2="724"/>
+        <circle class="stop" cx="816" cy="724" r="10"/>
+        <line class="stop-mark" x1="812" y1="720" x2="820" y2="728"/>
+        <line class="stop-mark" x1="820" y1="720" x2="812" y2="728"/>
+        <text class="legend-text" x="836" y="728">blocked public bypass</text>
+        <text class="caption" x="1236" y="762" text-anchor="end">The bridge is the only public ingress.</text>
       </svg>
     </div>
   </div>

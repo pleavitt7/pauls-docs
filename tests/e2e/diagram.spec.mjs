@@ -67,6 +67,8 @@ test.describe('Starlight diagram integration', () => {
     await expect(frame.locator('.node-name', { hasText: 'Hindsight Memory' })).toBeVisible();
     await expect(frame.locator('.node-name', { hasText: 'PostgreSQL' })).toBeVisible();
     await expect(frame.locator('.node-name')).toHaveCount(8);
+    await expect(frame.locator('.connector-label', { hasText: 'CALLER MEMORY' })).toBeVisible();
+    await expect(frame.locator('.connector-label', { hasText: 'MEMORY API' })).toBeVisible();
     await expect(frame.locator('.masthead')).toBeHidden();
     await expect(frame.locator('svg')).toBeVisible();
   });

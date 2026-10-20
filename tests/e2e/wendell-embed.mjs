@@ -139,7 +139,7 @@ for (const theme of ['light', 'dark']) {
   });
   check(
     'embedded plate plays the sequence and settles on the complete frame',
-    m.frame === 'end' && m.step === '6' && m.faded === 0 && m.items === 6 && m.labels === 24 && m.decorativeVisible === 0,
+    m.frame === 'end' && m.step === '6' && m.faded === 0 && m.items === 6 && m.labels === 25 && m.decorativeVisible === 0,
     JSON.stringify(m),
   );
   check(

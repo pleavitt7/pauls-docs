@@ -287,7 +287,7 @@
     <div class="diagram-container">
       <svg viewBox="0 0 1120 940" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="wendell-call-title wendell-call-desc">
         <title id="wendell-call-title">Wendell inbound phone call sequence</title>
-        <desc id="wendell-call-desc">A customer dials the Twilio number. Twilio's webhook reaches the media bridge through the ngrok tunnel, the bridge checks the caller allowlist and answers with media-stream TwiML carrying the caller number and call SID, and Twilio opens the media websocket. The bridge streams caller audio to the live voice model, which speaks back, and records the call. The bridge delegates the job details to the booking backend, which checks calendar availability and offers slots. The caller confirms, the calendar is written, and the bridge speaks the confirmation back down the line.</desc>
+        <desc id="wendell-call-desc">A customer dials the Twilio number. Twilio's webhook reaches the media bridge through the ngrok tunnel, the bridge checks the caller allowlist, loads that caller's own memory bank, and answers with media-stream TwiML carrying the caller number and call SID, and Twilio opens the media websocket. The bridge streams caller audio to the live voice model, which speaks back, and records the call. The bridge delegates the job details to the booking backend, which checks calendar availability and offers slots. The caller confirms, the calendar is written, and the bridge speaks the confirmation back down the line.</desc>
         <defs>
           <marker id="wendell-call-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
             <polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/>
@@ -323,6 +323,9 @@
           <path d="M448 456 H552" stroke="#2d3142" stroke-width="1" marker-end="url(#wendell-call-arrow-ink)"/>
           <path d="M568 512 H672" stroke="#4f5d75" stroke-width="1" marker-end="url(#wendell-call-arrow)"/>
           <path d="M672 568 H568" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#wendell-call-arrow)"/>
+          <!-- The bridge keeps its own per-caller bank in the local Hindsight
+               service; nothing from that bank reaches the voice model. -->
+          <path d="M560 356 H604 V380 H560" stroke="#4f5d75" stroke-width="1" marker-end="url(#wendell-call-arrow)"/>
           <path d="M568 624 H672" stroke="#4f5d75" stroke-width="1" marker-end="url(#wendell-call-arrow)"/>
           <path d="M800 680 H844 V704 H800" stroke="#4f5d75" stroke-width="1" marker-end="url(#wendell-call-arrow)"/>
           <path d="M672 736 H568" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#wendell-call-arrow)"/>
@@ -363,12 +366,14 @@
           <text x="216" y="222" fill="#bf4520" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" letter-spacing="0.06em">DIALS</text>
         </g>
 
-        <!-- Step 2 · webhook accepted, caller on the allowlist -->
-        <g data-motion-item data-step="2" aria-label="Step 2: the bridge receives the call webhook and checks the caller against the allowlist">
+        <!-- Step 2 · webhook accepted, caller on the allowlist, caller bank loaded -->
+        <g data-motion-item data-step="2" aria-label="Step 2: the bridge receives the call webhook, checks the caller against the allowlist, and loads that caller's own memory bank">
           <rect x="454" y="266" width="48" height="16" fill="#f5f5f5"/>
           <text x="458" y="278" fill="#2e5aa8" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" letter-spacing="0.06em">WEBHOOK</text>
           <rect x="454" y="322" width="68" height="16" fill="#f5f5f5"/>
           <text x="458" y="334" fill="#2e5aa8" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" letter-spacing="0.06em">ALLOWLIST ✓</text>
+          <rect x="616" y="360" width="42" height="16" fill="#f5f5f5"/>
+          <text x="620" y="372" fill="#2d3142" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" letter-spacing="0.06em">BANK</text>
         </g>
 
         <!-- Step 3 · media stream negotiated -->

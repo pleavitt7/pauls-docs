@@ -587,11 +587,11 @@
           <div class="masthead-kicker">
             <span>System plate 01</span>
             <span>Home infrastructure</span>
-            <span>Observed 16 Oct 2026</span>
+            <span>Observed 20 Oct 2026</span>
           </div>
           <h1>NUC automation and agent architecture</h1>
         </div>
-        <p class="standfirst">A single physical host carries two operating models: Home Assistant is isolated inside a virtual machine, while host-native Hermes ingress services converge on the Agent Runtime, which persists memory through a local Hindsight service and PostgreSQL database.</p>
+        <p class="standfirst">A single physical host carries two operating models: Home Assistant is isolated inside a virtual machine, while host-native Hermes ingress services converge on the Agent Runtime, which persists memory through a local Hindsight service and PostgreSQL database. The Wendell Phone Bridge keeps its own caller-scoped banks in that same Hindsight service.</p>
       </header>
 
       <div class="content-grid">
@@ -604,7 +604,7 @@
               <li class="index-item"><span class="index-number">03</span><p class="index-name">Home Assistant</p><p class="index-detail">VM 100 · QEMU/KVM</p></li>
               <li class="index-item"><span class="index-number">04</span><p class="index-name">Hermes ingress</p><p class="index-detail">dashboard · gateway · phone</p></li>
               <li class="index-item"><span class="index-number">05</span><p class="index-name">Agent runtime</p><p class="index-detail">model loop · tools · memory</p></li>
-              <li class="index-item"><span class="index-number">06</span><p class="index-name">Memory services</p><p class="index-detail">Hindsight · PostgreSQL</p></li>
+              <li class="index-item"><span class="index-number">06</span><p class="index-name">Memory services</p><p class="index-detail">Hindsight · caller banks · PostgreSQL</p></li>
             </ol>
           </section>
 
@@ -615,6 +615,7 @@
               <div class="facts-row"><dt>Hermes gateway</dt><dd>WhatsApp · routing · sessions</dd></div>
               <div class="facts-row"><dt>Agent runtime</dt><dd>model loop · tools · skills · memory</dd></div>
               <div class="facts-row"><dt>Memory</dt><dd>Hindsight :8888 · PostgreSQL :5432</dd></div>
+              <div class="facts-row"><dt>Wendell memory</dt><dd>caller-scoped banks · consent before save</dd></div>
               <div class="facts-row"><dt>Phone path</dt><dd>Twilio → ngrok → bridge</dd></div>
             </dl>
           </section>
@@ -625,7 +626,7 @@
               <li><span class="legend-line accent"></span><span>Home Assistant API call</span></li>
               <li><span class="legend-line blue"></span><span>external voice ingress</span></li>
               <li><span class="legend-line"></span><span>local and service connections</span></li>
-              <li><span class="legend-line dashed"></span><span>runtime and memory handoff</span></li>
+              <li><span class="legend-line dashed"></span><span>runtime and caller memory handoff</span></li>
             </ul>
           </section>
         </aside>
@@ -663,6 +664,11 @@
                   <strong>Twilio</strong><span class="blue">→</span><strong>ngrok</strong><span class="blue">→</span><strong>Wendell Phone Bridge</strong><span>→</span><strong>Agent Runtime</strong>
                 </div>
               </li>
+              <li class="mobile-route mobile-route-chain">
+                <div class="mobile-chain">
+                  <strong>Wendell Phone Bridge</strong><span>→</span><strong>Hindsight Memory</strong><span>caller-scoped banks</span>
+                </div>
+              </li>
               <li class="mobile-route">
                 <div class="mobile-source"><strong>Hermes Agent Runtime</strong><span>automation tools</span></div>
                 <span class="mobile-arrow" aria-hidden="true">→</span>
@@ -679,7 +685,7 @@
           <div class="diagram-scroll">
             <svg viewBox="0 0 1280 800" role="img" aria-labelledby="system-plate-title system-plate-desc">
               <title id="system-plate-title">NUC infrastructure runtime topology</title>
-              <desc id="system-plate-desc">Home network access reaches Home Assistant in virtual machine 100. Browser, WhatsApp, and Twilio voice ingress converge on one Hermes Agent Runtime, which calls the Home Assistant API and persists memory through a local Hindsight service backed by PostgreSQL.</desc>
+              <desc id="system-plate-desc">Home network access reaches Home Assistant in virtual machine 100. Browser, WhatsApp, and Twilio voice ingress converge on one Hermes Agent Runtime, which calls the Home Assistant API and persists memory through a local Hindsight service backed by PostgreSQL. The Wendell Phone Bridge keeps its own caller-scoped continuity banks and reaches the same Hindsight service directly, without using the Agent Runtime's memory.</desc>
               <defs>
                 <marker id="arrow-muted" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path class="marker-muted" d="M0,0 L8,4 L0,8 Z"/></marker>
                 <marker id="arrow-accent" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path class="marker-accent" d="M0,0 L8,4 L0,8 Z"/></marker>
@@ -764,6 +770,14 @@
               <rect class="label-mask" x="790" y="544" width="68" height="14"/>
               <text class="connector-label" x="824" y="554">MEMORY API</text>
 
+              <!-- The bridge keeps its own caller-scoped continuity banks, so it
+                   reaches Hindsight directly instead of borrowing runtime memory.
+                   The label sits past the voice line's turn at x=1070 so its own
+                   mask clears that line. -->
+              <path class="connector-dashed" d="M1168,372 H1184 Q1192,372 1192,380 V554 Q1192,562 1184,562 H838 Q830,562 830,570 V572"/>
+              <rect class="label-mask" x="1080" y="542" width="96" height="14"/>
+              <text class="connector-label" x="1128" y="552">CALLER MEMORY</text>
+
               <path class="connector" d="M886,610 H936"/>
               <rect class="label-mask" x="897" y="592" width="28" height="14"/>
               <text class="connector-label" x="911" y="602">SQL</text>
@@ -821,16 +835,16 @@
               <text class="status-value" x="150" y="728">nuc</text>
               <text class="status-label" x="300" y="728">HERMES GATEWAY</text>
               <text class="status-value" x="424" y="728">connected</text>
-              <text class="status-label" x="610" y="728">MEMORY BANK</text>
-              <text class="status-value" x="704" y="728">hermes</text>
+              <text class="status-label" x="610" y="728">MEMORY BANKS</text>
+              <text class="status-value" x="712" y="728">hermes + caller</text>
               <text class="status-label" x="820" y="728">SERVICE MODEL</text>
               <text class="status-value" x="938" y="728">VM + host-native</text>
             </svg>
           </div>
 
           <figcaption>
-            <p><strong>Reading order:</strong> external interfaces enter from the top; ingress services hand work to the Agent Runtime, which calls Home Assistant and sends memory operations to Hindsight; Hindsight persists them in PostgreSQL.</p>
-            <p><strong>Scope:</strong> host, service, and local datastore details were refreshed from the live NUC on 16 October 2026. Runtime, memory, and Home Assistant lines describe logical integration, not a captured network trace.</p>
+            <p><strong>Reading order:</strong> external interfaces enter from the top; ingress services hand work to the Agent Runtime, which calls Home Assistant and sends memory operations to Hindsight. The Wendell Phone Bridge keeps a separate caller-scoped memory path into the same Hindsight service. Hindsight persists both sets of records in PostgreSQL.</p>
+            <p><strong>Scope:</strong> host, service, and local datastore details were refreshed from the live NUC on 20 October 2026. Runtime, memory, Home Assistant, and caller-memory lines describe logical integration, not a captured network trace.</p>
           </figcaption>
         </figure>
       </div>
