@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wendell data flow and trust boundaries</title>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const embedded = params.has('embed');
+    const preferred = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    document.documentElement.dataset.theme = params.get('theme') || preferred;
+    if (embedded) document.documentElement.classList.add('embedded');
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin || event.data?.type !== 'diagram-theme') return;
+      document.documentElement.dataset.theme = event.data.theme === 'light' ? 'light' : 'dark';
+      const fonts = event.data.fonts;
+      if (fonts && typeof fonts === 'object') {
+        for (const token of ['--sans', '--mono']) {
+          if (typeof fonts[token] === 'string' && fonts[token].trim()) {
+            document.documentElement.style.setProperty(token, fonts[token]);
+          }
+        }
+      }
+    });
+
+    if (!embedded && !params.has('theme')) {
+      window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (event) => {
+        document.documentElement.dataset.theme = event.matches ? 'light' : 'dark';
+      });
+    }
+  </script>
+  <style>
+    :root {
+      --sans: var(--sl-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+      --mono: var(--sl-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace);
+    }
+    :root, [data-theme="light"] {
+      color-scheme: light;
+      --paper: #ffffff;
+      --paper-2: #f6f7f9;
+      --ink: #353841;
+      --muted: #555962;
+      --soft: #7a7f89;
+      --rule: rgba(53,56,65,.14);
+      --rule-strong: rgba(53,56,65,.32);
+      --accent: #3d50f5;
+      --accent-wash: rgba(61,80,245,.08);
+      --link: #0e7490;
+      --link-wash: rgba(14,116,144,.08);
+      --node: rgba(255,255,255,.96);
+      --zone: rgba(53,56,65,.025);
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --paper: #17181c;
+      --paper-2: #23262f;
+      --ink: #e7e8ec;
+      --muted: #c1c3c8;
+      --soft: #9296a0;
+      --rule: rgba(193,195,200,.18);
+      --rule-strong: rgba(193,195,200,.38);
+      --accent: #7390ff;
+      --accent-wash: rgba(115,144,255,.12);
+      --link: #5bbad5;
+      --link-wash: rgba(91,186,213,.12);
+      --node: rgba(35,38,47,.97);
+      --zone: rgba(231,232,236,.028);
+    }
+    * { box-sizing: border-box; }
+    html { color: var(--ink); background: var(--paper); font-family: var(--sans); }
+    body { margin: 0; }
+    main { padding: 38px 32px 52px; }
+    .page { width: min(100%, 1440px); margin: 0 auto; }
+    .masthead { display: grid; grid-template-columns: minmax(0,1fr) minmax(300px,420px); gap: 48px; align-items: end; padding: 22px 0 28px; border-top: 3px solid var(--ink); border-bottom: 1px solid var(--rule-strong); }
+    .kicker { margin: 0 0 14px; color: var(--accent); font: 600 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    h1 { max-width: 18ch; margin: 0; font-size: clamp(2.6rem,5vw,4.5rem); font-weight: 400; letter-spacing: -.045em; line-height: 1.02; }
+    .standfirst { margin: 0; color: var(--muted); font-size: 1rem; line-height: 1.65; }
+    .diagram-scroll { width: 100%; margin-top: 30px; overflow-x: auto; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: var(--paper); }
+    svg { display: block; width: 100%; min-width: 1280px; height: auto; }
+    .embedded body { min-height: 100vh; }
+    .embedded main { padding: 0; }
+    .embedded .page { width: 100%; max-width: none; }
+    .embedded .masthead { display: none; }
+    .embedded .diagram-scroll { margin: 0; overflow: hidden; border: 0; }
+    .embedded svg { min-width: 0; }
+
+    .zone { fill: var(--zone); stroke: var(--rule-strong); stroke-width: 1; stroke-dasharray: 7 6; }
+    .zone-label-mask, .label-mask { fill: var(--paper); }
+    .zone-label { fill: var(--soft); font: 600 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+    .connector { fill: none; stroke: var(--muted); stroke-width: 2; }
+    .connector-link { fill: none; stroke: var(--link); stroke-width: 2.4; }
+    .connector-accent { fill: none; stroke: var(--accent); stroke-width: 3; }
+    .connector-return { fill: none; stroke: var(--link); stroke-width: 1.7; stroke-dasharray: 6 5; }
+    .blocked { fill: none; stroke: var(--muted); stroke-width: 1.7; stroke-dasharray: 5 5; }
+    .arrow-label { fill: var(--muted); font: 600 10px/1 var(--mono); letter-spacing: .07em; text-anchor: middle; }
+    .arrow-label.link { fill: var(--link); }
+    .node { fill: var(--node); stroke: var(--rule-strong); stroke-width: 1.2; }
+    .node-focal { fill: var(--accent-wash); stroke: var(--accent); stroke-width: 2; }
+    .node-external { fill: var(--link-wash); stroke: var(--link); stroke-width: 1.4; }
+    .tag { fill: var(--paper-2); stroke: var(--rule); stroke-width: 1; }
+    .tag-accent { fill: var(--accent); }
+    .tag-link { fill: var(--link); }
+    .tag-text { fill: var(--soft); font: 600 9px/1 var(--mono); letter-spacing: .1em; }
+    .tag-text.inverse { fill: white; }
+    .node-name { fill: var(--ink); font: 600 17px/1.2 var(--sans); }
+    .node-detail { fill: var(--muted); font: 500 11px/1.4 var(--mono); }
+    .node-note { fill: var(--soft); font: 500 10px/1.4 var(--mono); }
+    .divider { stroke: var(--rule); stroke-width: 1; }
+    .stop { fill: var(--paper); stroke: var(--muted); stroke-width: 1.6; }
+    .stop-mark { stroke: var(--muted); stroke-width: 1.6; stroke-linecap: round; }
+    .legend-rule { stroke-width: 2.4; }
+    .legend-text { fill: var(--muted); font: 500 10px/1 var(--mono); }
+    .caption { fill: var(--soft); font: italic 16px/1.3 var(--sans); }
+    @media (max-width: 760px) { main { padding: 24px 18px 36px; } .masthead { grid-template-columns: 1fr; gap: 22px; } }
+    @media print { .diagram-scroll { overflow: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="page">
+    <header class="masthead">
+      <div>
+        <p class="kicker">Wendell · data flow · trust boundaries</p>
+        <h1>One exposed bridge, two constrained work paths</h1>
+      </div>
+      <p class="standfirst">Twilio and ngrok terminate at the Wendell phone bridge. Voice conversation and general questions stay isolated from the narrow booking path that validates addresses and reads or writes Calendar only after confirmation.</p>
+    </header>
+
+    <div class="diagram-scroll">
+      <svg viewBox="0 0 1280 780" role="img" aria-labelledby="wendell-data-flow-title wendell-data-flow-desc">
+        <title id="wendell-data-flow-title">Wendell data flow and trust boundaries</title>
+        <desc id="wendell-data-flow-desc">An architecture diagram showing calls entering through Twilio and ngrok, the Wendell bridge exchanging audio with OpenAI, general questions routed to an isolated Hermes profile, and booking work using Nominatim and Google Calendar.</desc>
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted)"/>
+          </marker>
+          <marker id="arrow-link" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--link)"/>
+          </marker>
+          <marker id="arrow-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+          </marker>
+        </defs>
+
+        <!-- Trust zones -->
+        <rect class="zone" x="32" y="48" width="300" height="604" rx="8"/>
+        <rect class="zone-label-mask" x="52" y="43" width="116" height="20" rx="2"/>
+        <text class="zone-label" x="110" y="57" text-anchor="middle">PUBLIC EDGE</text>
+
+        <rect class="zone" x="372" y="48" width="468" height="604" rx="8"/>
+        <rect class="zone-label-mask" x="392" y="43" width="138" height="20" rx="2"/>
+        <text class="zone-label" x="461" y="57" text-anchor="middle">HOME NUC · PAUL</text>
+
+        <rect class="zone" x="880" y="48" width="368" height="604" rx="8"/>
+        <rect class="zone-label-mask" x="900" y="43" width="126" height="20" rx="2"/>
+        <text class="zone-label" x="963" y="57" text-anchor="middle">EXTERNAL APIS</text>
+
+        <!-- Connectors are deliberately drawn before nodes. -->
+        <line class="connector-accent" x1="142" y1="220" x2="142" y2="286" marker-end="url(#arrow-accent)"/>
+        <line class="connector" x1="222" y1="286" x2="222" y2="220" marker-end="url(#arrow)"/>
+        <rect class="label-mask" x="155" y="246" width="54" height="18" rx="2"/>
+        <text class="arrow-label" x="182" y="258">VOICE</text>
+
+        <line class="connector-accent" x1="182" y1="392" x2="182" y2="460" marker-end="url(#arrow-accent)"/>
+        <rect class="label-mask" x="137" y="417" width="90" height="18" rx="2"/>
+        <text class="arrow-label" x="182" y="429">WEBHOOK</text>
+
+        <path class="connector-accent" d="M 292 510 H 350 Q 358 510 358 502 V 312 Q 358 304 366 304 H 424" marker-end="url(#arrow-accent)"/>
+        <rect class="label-mask" x="310" y="350" width="96" height="18" rx="2"/>
+        <text class="arrow-label" x="358" y="362">HTTPS / WSS</text>
+
+        <line class="connector-link" x1="792" y1="246" x2="928" y2="246" marker-end="url(#arrow-link)"/>
+        <line class="connector-return" x1="928" y1="286" x2="792" y2="286" marker-end="url(#arrow-link)"/>
+        <rect class="label-mask" x="818" y="256" width="84" height="18" rx="2"/>
+        <text class="arrow-label link" x="860" y="268">AUDIO + AI</text>
+
+        <line class="connector" x1="566" y1="354" x2="566" y2="432" marker-end="url(#arrow)"/>
+        <rect class="label-mask" x="519" y="384" width="94" height="18" rx="2"/>
+        <text class="arrow-label" x="566" y="396">GENERAL Q&amp;A</text>
+
+        <path class="connector-link" d="M 792 318 H 850 Q 858 318 858 326 V 374 Q 858 382 866 382 H 928" marker-end="url(#arrow-link)"/>
+        <rect class="label-mask" x="815" y="345" width="86" height="18" rx="2"/>
+        <text class="arrow-label link" x="858" y="357">ADDRESS</text>
+
+        <path class="connector-link" d="M 792 330 H 830 Q 838 330 838 338 V 544 Q 838 552 846 552 H 928" marker-end="url(#arrow-link)"/>
+        <rect class="label-mask" x="797" y="430" width="82" height="18" rx="2"/>
+        <text class="arrow-label link" x="838" y="442">CALENDAR</text>
+
+        <!-- Forbidden public bypass: it visibly stops at the private boundary. -->
+        <line class="blocked" x1="292" y1="582" x2="354" y2="582"/>
+        <circle class="stop" cx="366" cy="582" r="12"/>
+        <line class="stop-mark" x1="361" y1="577" x2="371" y2="587"/>
+        <line class="stop-mark" x1="371" y1="577" x2="361" y2="587"/>
+        <rect class="label-mask" x="266" y="600" width="132" height="18" rx="2"/>
+        <text class="arrow-label" x="332" y="612">NO DIRECT ACCESS</text>
+
+        <!-- Nodes -->
+        <rect class="node" x="72" y="124" width="220" height="96" rx="8"/>
+        <rect class="tag" x="88" y="140" width="54" height="20" rx="2"/>
+        <text class="tag-text" x="115" y="154" text-anchor="middle">ACTOR</text>
+        <text class="node-name" x="88" y="184">Caller</text>
+        <text class="node-detail" x="88" y="204">telephone audio · DTMF PIN</text>
+
+        <rect class="node" x="72" y="286" width="220" height="106" rx="8"/>
+        <rect class="tag" x="88" y="302" width="72" height="20" rx="2"/>
+        <text class="tag-text" x="124" y="316" text-anchor="middle">TELEPHONY</text>
+        <text class="node-name" x="88" y="346">Twilio</text>
+        <text class="node-detail" x="88" y="366">Australian number · Media Streams</text>
+        <text class="node-note" x="88" y="382">trusted From + CallSid metadata</text>
+
+        <rect class="node" x="72" y="460" width="220" height="100" rx="8"/>
+        <rect class="tag" x="88" y="476" width="58" height="20" rx="2"/>
+        <text class="tag-text" x="117" y="490" text-anchor="middle">TUNNEL</text>
+        <text class="node-name" x="88" y="520">ngrok</text>
+        <text class="node-detail" x="88" y="540">public TLS → 127.0.0.1:8787</text>
+
+        <rect class="node-focal" x="424" y="196" width="368" height="158" rx="8"/>
+        <rect class="tag-accent" x="444" y="216" width="72" height="22" rx="2"/>
+        <text class="tag-text inverse" x="480" y="231" text-anchor="middle">CONTROL</text>
+        <text class="node-name" x="444" y="270">Wendell Phone Bridge</text>
+        <text class="node-detail" x="444" y="294">Node service · caller allowlist · per-call state</text>
+        <line class="divider" x1="444" y1="310" x2="772" y2="310"/>
+        <text class="node-note" x="444" y="330">booking tools · profile-local recordings · confirmation gate</text>
+
+        <rect class="node" x="424" y="432" width="368" height="112" rx="8"/>
+        <rect class="tag" x="444" y="448" width="96" height="20" rx="2"/>
+        <text class="tag-text" x="492" y="462" text-anchor="middle">ISOLATED API</text>
+        <text class="node-name" x="444" y="494">Hermes · wendell profile</text>
+        <text class="node-detail" x="444" y="516">/p/wendell · API toolsets disabled · memory off</text>
+        <text class="node-note" x="444" y="534">general reasoning only; no route to Paul's default profile</text>
+
+        <rect class="node-external" x="928" y="116" width="264" height="184" rx="8"/>
+        <rect class="tag-link" x="948" y="136" width="82" height="22" rx="2"/>
+        <text class="tag-text inverse" x="989" y="151" text-anchor="middle">OPENAI</text>
+        <text class="node-name" x="948" y="190">OpenAI model services</text>
+        <text class="node-detail" x="948" y="216">GPT-Live · speech + transcription</text>
+        <line class="divider" x1="948" y1="232" x2="1172" y2="232"/>
+        <text class="node-detail" x="948" y="254">Responses API · booking dialogue</text>
+        <text class="node-note" x="948" y="276">receives no PIN digits or callback digits</text>
+
+        <rect class="node-external" x="928" y="338" width="264" height="88" rx="8"/>
+        <rect class="tag-link" x="948" y="354" width="76" height="20" rx="2"/>
+        <text class="tag-text inverse" x="986" y="368" text-anchor="middle">MAPS API</text>
+        <text class="node-name" x="948" y="400">Nominatim</text>
+        <text class="node-detail" x="948" y="418">Australia-only address validation</text>
+
+        <rect class="node-external" x="928" y="500" width="264" height="116" rx="8"/>
+        <rect class="tag-link" x="948" y="516" width="88" height="20" rx="2"/>
+        <text class="tag-text inverse" x="992" y="530" text-anchor="middle">GOOGLE API</text>
+        <text class="node-name" x="948" y="562">Google Calendar</text>
+        <text class="node-detail" x="948" y="584">free/busy read · event write</text>
+        <text class="node-note" x="948" y="602">write only after explicit later confirmation</text>
+
+        <!-- Bottom legend strip -->
+        <line x1="44" y1="688" x2="1236" y2="688" stroke="var(--rule-strong)"/>
+        <line class="connector-accent legend-rule" x1="64" y1="724" x2="116" y2="724" marker-end="url(#arrow-accent)"/>
+        <text class="legend-text" x="132" y="728">primary call path</text>
+        <line class="connector-link legend-rule" x1="318" y1="724" x2="370" y2="724" marker-end="url(#arrow-link)"/>
+        <text class="legend-text" x="386" y="728">external API exchange</text>
+        <line class="blocked" x1="610" y1="724" x2="654" y2="724"/>
+        <circle class="stop" cx="666" cy="724" r="10"/>
+        <line class="stop-mark" x1="662" y1="720" x2="670" y2="728"/>
+        <line class="stop-mark" x1="670" y1="720" x2="662" y2="728"/>
+        <text class="legend-text" x="686" y="728">blocked public bypass</text>
+        <text class="caption" x="1220" y="730" text-anchor="end">The bridge is the only public ingress.</text>
+      </svg>
+    </div>
+  </div>
+</main>
+</body>
+</html>

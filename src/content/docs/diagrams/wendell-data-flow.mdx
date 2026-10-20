@@ -1,0 +1,71 @@
+---
+title: Wendell data flow and trust boundaries
+description: How calls, model traffic, general questions, address validation, and confirmed Calendar writes move through Wendell.
+date: 2026-10-20
+order: 3
+tags:
+  - Wendell
+  - Twilio
+  - GPT-Live
+  - Hermes
+diagram: diagrams/wendell-data-flow.html
+tableOfContents: false
+sidebar:
+  order: 3
+head:
+  - tag: style
+    content: ':root { --sl-content-width: 92rem; }'
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+import DiagramPreview from '../../../components/DiagramPreview.astro';
+
+This view separates Wendell's public call path from its two constrained work paths:
+voice conversation and general reasoning, and appointment booking. The phone bridge
+is the only service exposed through ngrok; neither Hermes nor Calendar has a public
+route.
+
+<DiagramPreview
+  src="diagrams/wendell-data-flow.html"
+  title="Wendell data flow and trust boundaries"
+  ratio="1280 / 780"
+  maxHeight="900px"
+  linkBelow={72}
+  linkLabel="Open the full data-flow diagram"
+/>
+
+## Primary call path
+
+A caller reaches the Australian Twilio number. Twilio posts the incoming-call
+webhook through ngrok, receives Media Streams TwiML, and then sends bidirectional
+G.711 audio through the same tunnel to the Wendell bridge on loopback port `8787`.
+The bridge applies the caller allowlist, owns per-call state, and records calls under
+the isolated Wendell profile.
+
+## Voice and general questions
+
+The bridge exchanges audio, transcripts, and commentary with OpenAI GPT-Live. When
+a caller asks a general question, the bridge delegates it to the isolated
+`wendell` Hermes API route. That profile has API toolsets disabled, memory disabled,
+and no route to Paul's default Hermes profile.
+
+## Appointment booking
+
+Booking dialogue uses a separate narrow backend inside the bridge. The backend uses
+the OpenAI Responses API to collect structured details, Nominatim to validate an
+Australian address, and Google Calendar to read free/busy periods. Calendar events
+are written only after the caller hears the prepared summary and explicitly confirms
+in a later utterance.
+
+## Trust boundaries
+
+The public edge terminates at the bridge. Twilio and ngrok cannot directly call the
+Hermes profile, Nominatim, or Google Calendar. PIN digits are consumed locally, and
+the trusted callback number comes from Twilio metadata rather than from spoken
+input.
+
+<LinkCard
+  href="../wendell-call/"
+  title="See the call as a sequence"
+  description="Follow one inbound call message by message, including the booking handoff and confirmation gate."
+/>
