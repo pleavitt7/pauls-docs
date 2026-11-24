@@ -269,6 +269,51 @@ test('the call sequence loads the caller bank once the caller is identified', as
   assert.match(diagram, /loads that caller's own memory bank/);
 });
 
+test('the pipeline plate hands the finished torrent to the NAS from the worker, not the client', async () => {
+  const diagram = await readBuiltPage('diagrams/torrent-pipeline.html');
+
+  const boxes = nodeBoxes(diagram);
+  const client = boxes.get('qBittorrent');
+  const worker = boxes.get('Deliver worker');
+  const share = boxes.get('video share');
+  const seed = boxes.get('Local seed copy');
+  assert.ok(client && worker && share && seed, 'the plate must draw the client, the worker, the seed copy and the share');
+
+  const handoff = plateConnectors(diagram).filter(
+    (connector) => onBoxEdge(connector.start, worker) && onBoxEdge(connector.end, share),
+  );
+  assert.equal(handoff.length, 1, 'exactly one connector must run from the worker to the video share');
+
+  // The client and the seed copy must not reach the share themselves: the copy
+  // is what keeps seeding, and nothing else is allowed to write to the NAS.
+  for (const [label, box] of [['the client', client], ['the seed copy', seed]]) {
+    const direct = plateConnectors(diagram).filter(
+      (connector) => onBoxEdge(connector.start, box) && onBoxEdge(connector.end, share),
+    );
+    assert.equal(direct.length, 0, `${label} must not connect straight to the video share`);
+  }
+
+  assert.match(diagram, /SHA-256 readback/);
+  assert.match(diagram, />never moves or deletes the original</);
+});
+
+test('the pipeline plate keeps the download in a local seed copy and names the banned peer port', async () => {
+  const diagram = await readBuiltPage('diagrams/torrent-pipeline.html');
+
+  const boxes = nodeBoxes(diagram);
+  const client = boxes.get('qBittorrent');
+  const seed = boxes.get('Local seed copy');
+  const intoSeed = plateConnectors(diagram).filter(
+    (connector) => onBoxEdge(connector.start, client) && onBoxEdge(connector.end, seed),
+  );
+  assert.equal(intoSeed.length, 1, 'the client must write its download into the seed copy');
+
+  assert.match(diagram, />SEED AFTER</);
+  assert.match(diagram, /6881 is a banned port/);
+  assert.match(diagram, /TCP\/uTP 49160/);
+  assert.match(diagram, />\/\/192\.168\.1\.32\/video</);
+});
+
 test('the standalone diagram scales to its container instead of clipping', async () => {
   const diagram = await readBuiltPage('diagrams/proxmox-hermes-architecture.html');
 

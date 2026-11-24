@@ -1,0 +1,83 @@
+---
+title: Torrent download pipeline
+description: How an XSpeeds release travels through qBittorrent, stays on the NUC to seed, and reaches the DiskStation video share as a verified copy.
+date: 2026-11-25
+order: 4
+tags:
+  - XSpeeds
+  - qBittorrent
+  - DiskStation
+  - Docker
+diagram: diagrams/torrent-pipeline.html
+tableOfContents: false
+sidebar:
+  order: 4
+head:
+  - tag: style
+    content: ':root { --sl-content-width: 92rem; }'
+---
+
+import DiagramPreview from '../../../components/DiagramPreview.astro';
+
+The pipeline has three stages and two storage locations. XSpeeds supplies the
+torrent, qBittorrent downloads it onto the NUC, and a delivery worker copies the
+finished files onto the DiskStation. The copy is verified byte for byte before
+the run is called done; the original stays where it is so the torrent keeps
+seeding.
+
+<DiagramPreview
+  src="diagrams/torrent-pipeline.html"
+  title="Torrent download pipeline"
+  ratio="1280 / 780"
+  maxHeight="900px"
+  linkBelow={72}
+  linkLabel="Open the full pipeline diagram"
+/>
+
+## Choosing the release
+
+A browser session signs in to XSpeeds and searches by name. The release is chosen
+by season and episode number rather than upload date, and the details page is
+checked for seeders before the torrent file is fetched. Only the `.torrent`
+metadata comes through the browser — never a magnet link carrying the passkey, and
+never the tracker cookies.
+
+The client rejects the default peer port: XSpeeds bans `6881` and its neighbours,
+so the client announces on `49160`. The tracker reports which port it rejected,
+which is the fastest way to tell a banned port from an account restriction.
+
+## Downloading and seeding
+
+qBittorrent runs in the same rootless Docker daemon as the rest of the host
+services, with its Web UI on `:8090` and its download directory bind-mounted at
+`/downloads`. Completed files stay there. XSpeeds asks for 72 hours of seeding on
+anything over 500 MB, or a 1.0 ratio, within 14 days of completion, so the local
+copy is the seeding copy and is never moved.
+
+## Delivering to the NAS
+
+A worker polls the client every 60 seconds. Once a torrent reports complete, it
+resolves each file inside the download root, refuses anything that escapes that
+root or fails a size check, and copies the bytes to
+`//192.168.1.32/video/<destination>`. Every file is hashed before upload and read
+back afterwards; a mismatch fails the run instead of leaving a plausible-looking
+file behind. An existing file with different content is refused rather than
+overwritten, and the destination path cannot leave the configured share.
+
+The share is reached with `smbclient` rather than mounted, so Docker never holds a
+CIFS mount and the worker cannot write outside the share root.
+
+## Failure modes
+
+Two faults look identical from the client and are not.
+
+- **A banned or unreachable tracker port** shows as a tracker status message, and
+  the torrent sits at zero peers while the swarm is healthy.
+- **Broken container egress** shows as zero peers with a working tracker, because
+  the tracker answer arrives but the peer connections never leave the host. A
+  container on `--network host` reaching the same address proves the fault sits in
+  the user-mode network stack rather than the tracker or the account.
+
+A stalled torrent after a recovered network usually needs a forced reannounce: the
+announce that succeeded during the outage left the client holding no usable peer
+addresses.

@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Torrent download pipeline</title>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const embedded = params.has('embed');
+    const preferred = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    document.documentElement.dataset.theme = params.get('theme') || preferred;
+    if (embedded) document.documentElement.classList.add('embedded');
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin || event.data?.type !== 'diagram-theme') return;
+      document.documentElement.dataset.theme = event.data.theme === 'light' ? 'light' : 'dark';
+      const fonts = event.data.fonts;
+      if (fonts && typeof fonts === 'object') {
+        for (const token of ['--sans', '--mono']) {
+          if (typeof fonts[token] === 'string' && fonts[token].trim()) {
+            document.documentElement.style.setProperty(token, fonts[token]);
+          }
+        }
+      }
+    });
+
+    if (!embedded && !params.has('theme')) {
+      window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (event) => {
+        document.documentElement.dataset.theme = event.matches ? 'light' : 'dark';
+      });
+    }
+  </script>
+  <style>
+    :root {
+      --sans: var(--sl-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+      --mono: var(--sl-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace);
+    }
+    :root, [data-theme="light"] {
+      color-scheme: light;
+      --paper: #ffffff;
+      --paper-2: #f6f7f9;
+      --ink: #353841;
+      --muted: #555962;
+      --soft: #7a7f89;
+      --rule: rgba(53,56,65,.14);
+      --rule-strong: rgba(53,56,65,.32);
+      --accent: #3d50f5;
+      --accent-wash: rgba(61,80,245,.08);
+      --link: #0e7490;
+      --link-wash: rgba(14,116,144,.08);
+      --node: rgba(255,255,255,.96);
+      --zone: rgba(53,56,65,.025);
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --paper: #17181c;
+      --paper-2: #23262f;
+      --ink: #e7e8ec;
+      --muted: #c1c3c8;
+      --soft: #9296a0;
+      --rule: rgba(193,195,200,.18);
+      --rule-strong: rgba(193,195,200,.38);
+      --accent: #7390ff;
+      --accent-wash: rgba(115,144,255,.12);
+      --link: #5bbad5;
+      --link-wash: rgba(91,186,213,.12);
+      --node: rgba(35,38,47,.97);
+      --zone: rgba(231,232,236,.028);
+    }
+    * { box-sizing: border-box; }
+    html { color: var(--ink); background: var(--paper); font-family: var(--sans); }
+    body { margin: 0; }
+    main { padding: 38px 32px 52px; }
+    .page { width: min(100%, 1440px); margin: 0 auto; }
+    .masthead { display: grid; grid-template-columns: minmax(0,1fr) minmax(300px,420px); gap: 48px; align-items: end; padding: 22px 0 28px; border-top: 3px solid var(--ink); border-bottom: 1px solid var(--rule-strong); }
+    .kicker { margin: 0 0 14px; color: var(--accent); font: 600 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    h1 { max-width: 18ch; margin: 0; font-size: clamp(2.6rem,5vw,4.5rem); font-weight: 400; letter-spacing: -.045em; line-height: 1.02; }
+    .standfirst { margin: 0; color: var(--muted); font-size: 1rem; line-height: 1.65; }
+    .diagram-scroll { width: 100%; margin-top: 30px; overflow-x: auto; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: var(--paper); }
+    svg { display: block; width: 100%; min-width: 1280px; height: auto; }
+    .embedded body { min-height: 100vh; }
+    .embedded main { padding: 0; }
+    .embedded .page { width: 100%; max-width: none; }
+    .embedded .masthead { display: none; }
+    .embedded .diagram-scroll { margin: 0; overflow: hidden; border: 0; }
+    .embedded svg { min-width: 0; }
+
+    .zone { fill: var(--zone); stroke: var(--rule-strong); stroke-width: 1; stroke-dasharray: 7 6; }
+    .zone-label-mask, .label-mask { fill: var(--paper); }
+    .zone-label { fill: var(--soft); font: 600 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+    .connector { fill: none; stroke: var(--muted); stroke-width: 2; }
+    .connector-link { fill: none; stroke: var(--link); stroke-width: 2.4; }
+    .connector-accent { fill: none; stroke: var(--accent); stroke-width: 3; }
+    .arrow-label { fill: var(--muted); font: 600 10px/1 var(--mono); letter-spacing: .07em; text-anchor: middle; }
+    .arrow-label.link { fill: var(--link); }
+    .node { fill: var(--node); stroke: var(--rule-strong); stroke-width: 1.2; }
+    .node-focal { fill: var(--accent-wash); stroke: var(--accent); stroke-width: 2; }
+    .node-external { fill: var(--link-wash); stroke: var(--link); stroke-width: 1.4; }
+    .tag { fill: var(--paper-2); stroke: var(--rule); stroke-width: 1; }
+    .tag-accent { fill: var(--accent); }
+    .tag-link { fill: var(--link); }
+    .tag-text { fill: var(--soft); font: 600 9px/1 var(--mono); letter-spacing: .1em; }
+    .tag-text.inverse { fill: white; }
+    .node-name { fill: var(--ink); font: 600 17px/1.2 var(--sans); }
+    .node-detail { fill: var(--muted); font: 500 11px/1.4 var(--mono); }
+    .node-note { fill: var(--soft); font: 500 10px/1.4 var(--mono); }
+    .divider { stroke: var(--rule); stroke-width: 1; }
+    .legend-rule { stroke-width: 2.4; }
+    .legend-text { fill: var(--muted); font: 500 10px/1 var(--mono); }
+    .caption { fill: var(--soft); font: italic 16px/1.3 var(--sans); }
+    @media (max-width: 760px) { main { padding: 24px 18px 36px; } .masthead { grid-template-columns: 1fr; gap: 22px; } }
+    @media print { .diagram-scroll { overflow: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="page">
+    <header class="masthead">
+      <div>
+        <p class="kicker">XSpeeds · qBittorrent · DiskStation</p>
+        <h1>One indexer, one seed copy, one verified hand-off</h1>
+      </div>
+      <p class="standfirst">A private tracker supplied the release, qBittorrent pulls it over the swarm, and the files stay on the NUC so they keep seeding. A separate worker copies the finished torrent to the DiskStation over SMB, compares every byte by SHA-256, and refuses to overwrite a file it did not write. Nothing is moved or deleted from the seed copy, and the NAS share is never mounted into the client.</p>
+    </header>
+
+    <div class="diagram-scroll">
+      <svg viewBox="0 0 1280 780" role="img" aria-labelledby="torrent-pipeline-title torrent-pipeline-desc">
+        <title id="torrent-pipeline-title">Torrent download pipeline</title>
+        <desc id="torrent-pipeline-desc">An architecture diagram showing a torrent file taken from XSpeeds into qBittorrent, peers supplying the pieces, a local copy kept for seeding, a delivery worker that copies to the DiskStation video share with hash verification, and the resulting library read by a media player.</desc>
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted)"/>
+          </marker>
+          <marker id="arrow-link" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--link)"/>
+          </marker>
+          <marker id="arrow-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+          </marker>
+        </defs>
+
+        <!-- Trust zones -->
+        <rect class="zone" x="32" y="48" width="300" height="604" rx="8"/>
+        <rect class="zone-label-mask" x="52" y="43" width="96" height="20" rx="2"/>
+        <text class="zone-label" x="100" y="57" text-anchor="middle">INTERNET</text>
+
+        <rect class="zone" x="372" y="48" width="560" height="604" rx="8"/>
+        <rect class="zone-label-mask" x="392" y="43" width="138" height="20" rx="2"/>
+        <text class="zone-label" x="461" y="57" text-anchor="middle">HOME NUC · PAUL</text>
+
+        <rect class="zone" x="968" y="48" width="280" height="604" rx="8"/>
+        <rect class="zone-label-mask" x="998" y="43" width="114" height="20" rx="2"/>
+        <text class="zone-label" x="1055" y="57" text-anchor="middle">DISKSTATION</text>
+
+        <!-- Connectors are deliberately drawn before nodes. -->
+        <path class="connector-accent" d="M 292 180 H 332 Q 340 180 340 188 V 218 Q 340 226 348 226 H 424" marker-end="url(#arrow-accent)"/>
+
+        <path class="connector-link" d="M 292 356 H 348 Q 356 356 356 348 V 328 Q 356 320 364 320 H 424" marker-end="url(#arrow-link)"/>
+
+        <path class="connector" d="M 652 344 V 400" marker-end="url(#arrow)"/>
+        <rect class="label-mask" x="668" y="362" width="86" height="18" rx="2"/>
+        <text class="arrow-label" x="711" y="374">SEED AFTER</text>
+
+        <path class="connector" d="M 652 496 V 540" marker-end="url(#arrow)"/>
+        <rect class="label-mask" x="668" y="509" width="58" height="18" rx="2"/>
+        <text class="arrow-label" x="697" y="521">VERIFY</text>
+
+        <path class="connector-link" d="M 880 590 H 942 Q 950 590 950 582 V 264 Q 950 256 958 256 H 1008" marker-end="url(#arrow-link)"/>
+
+        <path class="connector" d="M 1128 332 V 400" marker-end="url(#arrow)"/>
+        <rect class="label-mask" x="1144" y="352" width="78" height="18" rx="2"/>
+        <text class="arrow-label" x="1183" y="364">PLAYBACK</text>
+
+        <!-- Nodes -->
+        <rect class="node-external" x="72" y="124" width="220" height="112" rx="8"/>
+        <rect class="tag-link" x="88" y="140" width="72" height="20" rx="2"/>
+        <text class="tag-text inverse" x="124" y="154" text-anchor="middle">INDEXER</text>
+        <text class="node-name" x="88" y="184">XSpeeds</text>
+        <text class="node-detail" x="88" y="204">private tracker · browse.php</text>
+        <text class="node-note" x="88" y="220">torrent metadata only</text>
+
+        <rect class="node-external" x="72" y="300" width="220" height="112" rx="8"/>
+        <rect class="tag-link" x="88" y="316" width="58" height="20" rx="2"/>
+        <text class="tag-text inverse" x="117" y="330" text-anchor="middle">SWARM</text>
+        <text class="node-name" x="88" y="360">Peer swarm</text>
+        <text class="node-detail" x="88" y="380">5-7 seeds · TCP/uTP 49160</text>
+        <text class="node-note" x="88" y="396">6881 is a banned port</text>
+
+        <rect class="node-focal" x="424" y="180" width="456" height="164" rx="8"/>
+        <rect class="tag-accent" x="444" y="198" width="62" height="22" rx="2"/>
+        <text class="tag-text inverse" x="475" y="213" text-anchor="middle">CLIENT</text>
+        <text class="node-name" x="444" y="248">qBittorrent</text>
+        <text class="node-detail" x="444" y="272">LinuxServer 5.3.0 · Docker · :8090 Web UI</text>
+        <line class="divider" x1="444" y1="290" x2="860" y2="290"/>
+        <text class="node-note" x="444" y="310">adds the torrent · downloads to /downloads · keeps seeding</text>
+
+        <rect class="node" x="424" y="400" width="456" height="96" rx="8"/>
+        <rect class="tag" x="444" y="414" width="54" height="20" rx="2"/>
+        <text class="tag-text" x="471" y="428" text-anchor="middle">STORE</text>
+        <text class="node-name" x="444" y="458">Local seed copy</text>
+        <text class="node-detail" x="444" y="478">~/torrent-agent/downloads · per-title folder</text>
+
+        <rect class="node" x="424" y="540" width="456" height="100" rx="8"/>
+        <rect class="tag" x="444" y="554" width="58" height="20" rx="2"/>
+        <text class="tag-text" x="473" y="568" text-anchor="middle">VERIFY</text>
+        <text class="node-name" x="444" y="598">Deliver worker</text>
+        <text class="node-detail" x="444" y="618">polls 60 s · SMB copy · SHA-256 readback</text>
+        <text class="node-note" x="444" y="634">never moves or deletes the original</text>
+
+        <rect class="node" x="1008" y="180" width="240" height="152" rx="8"/>
+        <rect class="tag" x="1028" y="196" width="66" height="20" rx="2"/>
+        <text class="tag-text" x="1061" y="210" text-anchor="middle">LIBRARY</text>
+        <text class="node-name" x="1028" y="240">video share</text>
+        <text class="node-detail" x="1028" y="260">//192.168.1.32/video</text>
+        <line class="divider" x1="1028" y1="276" x2="1228" y2="276"/>
+        <text class="node-note" x="1028" y="298">destination folder per title</text>
+        <text class="node-note" x="1028" y="314">guest-writable on the LAN</text>
+
+        <rect class="node" x="1008" y="400" width="240" height="96" rx="8"/>
+        <rect class="tag" x="1028" y="414" width="54" height="20" rx="2"/>
+        <text class="tag-text" x="1055" y="428" text-anchor="middle">VIEWER</text>
+        <text class="node-name" x="1028" y="458">Media player</text>
+        <text class="node-detail" x="1028" y="478">reads the same share</text>
+
+        <!-- Bottom legend strip -->
+        <line x1="44" y1="688" x2="1236" y2="688" stroke="var(--rule-strong)"/>
+        <line class="connector-accent legend-rule" x1="64" y1="724" x2="116" y2="724" marker-end="url(#arrow-accent)"/>
+        <text class="legend-text" x="132" y="728">primary hand-off</text>
+        <line class="connector-link legend-rule" x1="300" y1="724" x2="352" y2="724" marker-end="url(#arrow-link)"/>
+        <text class="legend-text" x="368" y="728">external exchange</text>
+        <line class="connector legend-rule" x1="540" y1="724" x2="584" y2="724" marker-end="url(#arrow)"/>
+        <text class="legend-text" x="600" y="728">local step</text>
+        <text class="caption" x="1236" y="762" text-anchor="end">The NAS receives a copy; the NUC keeps the seed.</text>
+      </svg>
+    </div>
+  </div>
+</main>
+</body>
+</html>
